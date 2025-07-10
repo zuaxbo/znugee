@@ -1,0 +1,178 @@
+﻿<!-- register.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊 - 檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!--<link rel="stylesheet" href="assets/css/style.css">-->
+    <!--<link rel="stylesheet" href="assets/css/login.css">-->
+</head>
+<body class="login-page">
+    <div id="app" class="container-fluid vh-100">
+        <div class="row h-100">
+            <!-- 左側背景區域 -->
+            <div class="col-lg-6 d-none d-lg-flex align-items-center justify-content-center bg-success">
+                <div class="text-center text-white">
+                    <i class="fas fa-user-plus fa-5x mb-4"></i>
+                    <h2 class="mb-3">加入我們</h2>
+                    <p class="lead">建立帳號，開始使用檔案管理系統</p>
+                </div>
+            </div>
+
+            <!-- 右側註冊表單 -->
+            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+                <div class="login-form-container">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-body p-5">
+                            <div class="text-center mb-4">
+                                <h3 class="card-title">
+                                    <i class="fas fa-user-plus text-success me-2"></i>
+                                    使用者註冊
+                                </h3>
+                                <p class="text-muted">請填寫以下資訊建立帳號</p>
+                            </div>
+
+                            <form @submit.prevent="handleRegister" novalidate>
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        <i class="fas fa-user me-2"></i>使用者名稱 *
+                                    </label>
+                                    <input type="text"
+                                           class="form-control"
+                                           :class="{ 'is-invalid': errors.username }"
+                                           id="username"
+                                           v-model="form.username"
+                                           placeholder="請輸入使用者名稱（3-50個字元）"
+                                           required
+                                           autocomplete="username">
+                                    <div v-if="errors.username" class="invalid-feedback">
+                                        {{ errors.username }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope me-2"></i>電子郵件 *
+                                    </label>
+                                    <input type="email"
+                                           class="form-control"
+                                           :class="{ 'is-invalid': errors.email }"
+                                           id="email"
+                                           v-model="form.email"
+                                           placeholder="請輸入電子郵件地址"
+                                           required
+                                           autocomplete="email">
+                                    <div v-if="errors.email" class="invalid-feedback">
+                                        {{ errors.email }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="fullName" class="form-label">
+                                        <i class="fas fa-id-card me-2"></i>姓名
+                                    </label>
+                                    <input type="text"
+                                           class="form-control"
+                                           :class="{ 'is-invalid': errors.fullName }"
+                                           id="fullName"
+                                           v-model="form.fullName"
+                                           placeholder="請輸入真實姓名（可選）"
+                                           autocomplete="name">
+                                    <div v-if="errors.fullName" class="invalid-feedback">
+                                        {{ errors.fullName }}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">
+                                        <i class="fas fa-lock me-2"></i>密碼 *
+                                    </label>
+                                    <div class="input-group">
+                                        <input :type="showPassword ? 'text' : 'password'"
+                                               class="form-control"
+                                               :class="{ 'is-invalid': errors.password }"
+                                               id="password"
+                                               v-model="form.password"
+                                               placeholder="請輸入密碼（至少6個字元）"
+                                               required
+                                               autocomplete="new-password">
+                                        <button type="button"
+                                                class="btn btn-outline-secondary"
+                                                @click="togglePassword">
+                                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                        </button>
+                                        <div v-if="errors.password" class="invalid-feedback">
+                                            {{ errors.password }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="confirmPassword" class="form-label">
+                                        <i class="fas fa-lock me-2"></i>確認密碼 *
+                                    </label>
+                                    <div class="input-group">
+                                        <input :type="showConfirmPassword ? 'text' : 'password'"
+                                               class="form-control"
+                                               :class="{ 'is-invalid': errors.confirmPassword }"
+                                               id="confirmPassword"
+                                               v-model="form.confirmPassword"
+                                               placeholder="請再次輸入密碼"
+                                               required
+                                               autocomplete="new-password">
+                                        <button type="button"
+                                                class="btn btn-outline-secondary"
+                                                @click="toggleConfirmPassword">
+                                            <i :class="showConfirmPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                        </button>
+                                        <div v-if="errors.confirmPassword" class="invalid-feedback">
+                                            {{ errors.confirmPassword }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid mb-3">
+                                    <button type="submit"
+                                            class="btn btn-success btn-lg"
+                                            :disabled="loading">
+                                        <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                        <i v-else class="fas fa-user-plus me-2"></i>
+                                        {{ loading ? '註冊中...' : '建立帳號' }}
+                                    </button>
+                                </div>
+
+                                <div class="text-center">
+                                    <p class="mb-0">
+                                        已經有帳號？
+                                        <a href="login.html" class="text-decoration-none">
+                                            <i class="fas fa-sign-in-alt me-1"></i>立即登入
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CDN Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+
+    <!-- Utils Scripts -->
+    <script src="assets/js/utils/constants.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>
+    <script src="assets/js/utils/auth.js"></script>
+    <script src="assets/js/utils/api.js"></script>
+    <!--<script src="assets/js/app.js"></script>-->
+
+    <!-- Page Script -->
+    <script src="assets/js/pages/register.js"></script>
+</body>
+</html>
