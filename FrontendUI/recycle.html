@@ -1,0 +1,281 @@
+﻿<!-- recycle.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資源回收筒 - 檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/files.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 導航列 -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="files.html">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    返回檔案管理
+                </a>
+
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-trash me-1"></i>
+                        資源回收筒
+                    </span>
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user me-1"></i>
+                        {{ currentUser ? currentUser.FullName || currentUser.Username : '未知使用者' }}
+                    </span>
+                    <button class="btn btn-outline-light btn-sm" @click="handleLogout">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        登出
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 工具列 -->
+        <div class="toolbar bg-light border-bottom p-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <!-- 左側控制項 -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- 批量操作按鈕 -->
+                            <div v-if="selectedFiles.length > 0" class="d-flex align-items-center gap-2">
+                                <span class="badge bg-danger">已選擇 {{ selectedFiles.length }} 個檔案</span>
+                                <button class="btn btn-sm btn-success" @click="batchRestore">
+                                    <i class="fas fa-undo me-1"></i>
+                                    批量還原
+                                </button>
+                                <button class="btn btn-sm btn-danger" @click="batchPermanentDelete">
+                                    <i class="fas fa-times me-1"></i>
+                                    永久刪除
+                                </button>
+                                <button class="btn btn-sm btn-secondary" @click="clearSelection">
+                                    <i class="fas fa-times me-1"></i>
+                                    取消選擇
+                                </button>
+                            </div>
+
+                            <!-- 清空回收筒 -->
+                            <button v-if="files.length > 0" class="btn btn-outline-danger" @click="cleanupRecycleBin">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                清空回收筒
+                            </button>
+
+                            <!-- 自動清理提示 -->
+                            <div v-if="files.length > 0" class="alert alert-warning d-flex align-items-center mb-0 py-2 px-3" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <small>檔案將在 30 天後自動永久刪除</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側搜尋 -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- 搜尋框 -->
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="搜尋已刪除的檔案..."
+                                       v-model="searchQuery"
+                                       @input="onSearchInput">
+                                <button class="btn btn-outline-secondary" @click="loadFiles">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+
+                            <!-- 排序選擇 -->
+                            <select class="form-select" style="width: auto;" v-model="sortOption" @change="onSortChange">
+                                <option value="DeletedAt-desc">最近刪除</option>
+                                <option value="DeletedAt-asc">最早刪除</option>
+                                <option value="FileName-asc">檔名 A-Z</option>
+                                <option value="FileName-desc">檔名 Z-A</option>
+                                <option value="FileSize-desc">大小（大到小）</option>
+                                <option value="FileSize-asc">大小（小到大）</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主內容區 -->
+        <div class="container-fluid py-4">
+            <!-- 載入中 -->
+            <div v-if="loading" class="text-center py-5">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                </div>
+                <p class="mt-2">載入已刪除檔案中...</p>
+            </div>
+
+            <!-- 檔案列表 -->
+            <div v-else-if="files.length > 0">
+                <!-- 統計資訊 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body py-3">
+                                <div class="row text-center">
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-trash text-danger fa-2x me-3"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ files.length }}</h5>
+                                                <small class="text-muted">已刪除檔案</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-weight text-info fa-2x me-3"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ totalSize }}</h5>
+                                                <small class="text-muted">總大小</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-clock text-warning fa-2x me-3"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ oldestDeletedDays }}</h5>
+                                                <small class="text-muted">最長保留天數</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-exclamation-triangle text-danger fa-2x me-3"></i>
+                                            <div>
+                                                <h5 class="mb-0">{{ expiringSoonCount }}</h5>
+                                                <small class="text-muted">7天內到期</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已刪除檔案列表 -->
+                <deleted-file-list :files="files"
+                                   :selected-files="selectedFiles"
+                                   @select="toggleFileSelection"
+                                   @select-all="toggleSelectAll"
+                                   @preview="showFilePreview"
+                                   @restore="restoreFile"
+                                   @permanent-delete="permanentDeleteFile"></deleted-file-list>
+
+                <!-- 分頁 -->
+                <nav class="mt-4" v-if="totalPages > 1">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                            <button class="page-link" @click="changePage(currentPage - 1)">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+
+                        <li v-for="page in visiblePages"
+                            :key="page"
+                            class="page-item"
+                            :class="{ active: page === currentPage }">
+                            <button class="page-link" @click="changePage(page)">
+                                {{ page }}
+                            </button>
+                        </li>
+
+                        <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                            <button class="page-link" @click="changePage(currentPage + 1)">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- 空狀態 -->
+            <div v-else class="text-center py-5">
+                <i class="fas fa-trash fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">資源回收筒是空的</h4>
+                <p class="text-muted">
+                    {{ searchQuery ? '沒有找到符合搜尋條件的檔案' : '目前沒有任何已刪除的檔案' }}
+                </p>
+                <div class="mt-4">
+                    <a href="files.html" class="btn btn-primary me-2">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        返回檔案管理
+                    </a>
+                    <button v-if="searchQuery" class="btn btn-outline-secondary" @click="clearSearch">
+                        <i class="fas fa-times me-2"></i>
+                        清除搜尋
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 檔案預覽 Modal -->
+        <file-preview-modal v-if="modals.preview"
+                            :file="previewFile"
+                            @close="closePreviewModal"></file-preview-modal>
+
+        <!-- 確認對話框 Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i :class="confirmModal.icon" class="me-2"></i>
+                            {{ confirmModal.title }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>{{ confirmModal.message }}</p>
+                        <div v-if="confirmModal.warning" class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {{ confirmModal.warning }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            取消
+                        </button>
+                        <button type="button"
+                                class="btn"
+                                :class="confirmModal.buttonClass"
+                                @click="confirmModal.callback"
+                                :disabled="confirmModal.loading">
+                            <span v-if="confirmModal.loading" class="spinner-border spinner-border-sm me-2"></span>
+                            {{ confirmModal.loading ? '處理中...' : confirmModal.confirmText }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CDN Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/http-vue-loader@1.4.2/src/httpVueLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+
+    <!-- Utils Scripts -->
+    <script src="assets/js/utils/constants.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>
+    <script src="assets/js/utils/auth.js"></script>
+    <script src="assets/js/utils/api.js"></script>
+    <script src="assets/js/utils/file-utils.js"></script>
+
+    <!-- Page Script -->
+    <script src="assets/js/pages/recycle.js"></script>
+</body>
+</html>
