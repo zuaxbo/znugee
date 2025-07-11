@@ -1,0 +1,2625 @@
+﻿<!-- recycle.html -->
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>資源回收筒 - 檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 自定義樣式 */
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+        }
+
+        .toolbar {
+            background-color: #ffffff;
+            border-bottom: 2px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .file-item {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            margin-bottom: 8px;
+        }
+
+            .file-item:hover {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                border-color: #007bff;
+                transform: translateY(-1px);
+            }
+
+            .file-item.selected {
+                background-color: #e7f3ff;
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+            }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 8px;
+            margin-right: 12px;
+        }
+
+            .file-icon.image {
+                background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+                color: #1976d2;
+            }
+
+            .file-icon.document {
+                background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+                color: #7b1fa2;
+            }
+
+            .file-icon.archive {
+                background: linear-gradient(135deg, #fff3e0, #ffcc02);
+                color: #f57c00;
+            }
+
+            .file-icon.video {
+                background: linear-gradient(135deg, #ffebee, #ffcdd2);
+                color: #d32f2f;
+            }
+
+            .file-icon.audio {
+                background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+                color: #388e3c;
+            }
+
+            .file-icon.default {
+                background: linear-gradient(135deg, #f5f5f5, #eeeeee);
+                color: #757575;
+            }
+
+        .drag-over {
+            border: 2px dashed #007bff !important;
+            background-color: rgba(0, 123, 255, 0.1) !important;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1080;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #ffffff, #f8f9fa);
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .btn {
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+            .btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+            .table thead th {
+                background-color: #f8f9fa;
+                border-bottom: 2px solid #dee2e6;
+                font-weight: 600;
+                color: #495057;
+            }
+
+            .table tbody tr:hover {
+                background-color: #f8f9fa;
+            }
+
+            .table tbody tr.table-active {
+                background-color: #e7f3ff;
+            }
+
+        .pagination .page-link {
+            border-radius: 6px;
+            margin: 0 2px;
+            border: 1px solid #dee2e6;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .badge {
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        /* 統計卡片樣式 */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+            .stats-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            }
+
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 1rem;
+        }
+
+            .stats-icon.danger {
+                background: linear-gradient(135deg, #ffebee, #ffcdd2);
+                color: #d32f2f;
+            }
+
+            .stats-icon.info {
+                background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+                color: #1976d2;
+            }
+
+            .stats-icon.warning {
+                background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+                color: #f57c00;
+            }
+
+            .stats-icon.success {
+                background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+                color: #388e3c;
+            }
+
+        /* 載入動畫 */
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 空狀態樣式 */
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+            .empty-state i {
+                opacity: 0.5;
+                margin-bottom: 1.5rem;
+            }
+
+            .empty-state h4 {
+                color: #6c757d;
+                margin-bottom: 1rem;
+            }
+
+            .empty-state p {
+                color: #868e96;
+                font-size: 1.1rem;
+            }
+
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .toolbar .col-md-6 {
+                margin-bottom: 1rem;
+            }
+
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+
+            .btn-group {
+                flex-wrap: wrap;
+            }
+
+                .btn-group .btn {
+                    margin-bottom: 0.25rem;
+                }
+        }
+
+        /* 檔案類型標籤 */
+        .file-type-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .file-type-image {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .file-type-document {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .file-type-archive {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .file-type-video {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+
+        .file-type-audio {
+            background-color: #e8f5e8;
+            color: #388e3c;
+        }
+
+        .file-type-default {
+            background-color: #f5f5f5;
+            color: #757575;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 導航列 -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="files.html">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    返回檔案管理
+                </a>
+
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-trash me-1"></i>
+                        資源回收筒
+                    </span>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog me-1"></i>
+                            設定
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#" @click="showHelp">
+                                    <i class="fas fa-question-circle me-2"></i>使用說明
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" @click="showShortcuts">
+                                    <i class="fas fa-keyboard me-2"></i>快捷鍵
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#" @click="cleanupRecycleBin">
+                                    <i class="fas fa-trash-alt me-2"></i>清空回收筒
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 工具列 -->
+        <div class="toolbar p-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <!-- 左側控制項 -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <!-- 批量操作按鈕 -->
+                            <div v-if="selectedFiles.length > 0" class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge bg-danger fs-6">已選擇 {{ selectedFiles.length }} 個檔案</span>
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-success btn-sm" @click="batchRestore">
+                                        <i class="fas fa-undo me-1"></i>
+                                        批量還原
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" @click="batchPermanentDelete">
+                                        <i class="fas fa-times me-1"></i>
+                                        永久刪除
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" @click="clearSelection">
+                                        <i class="fas fa-times me-1"></i>
+                                        取消選擇
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 清空回收筒 -->
+                            <button v-if="files.length > 0 && selectedFiles.length === 0"
+                                    class="btn btn-outline-danger btn-sm"
+                                    @click="cleanupRecycleBin">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                清空回收筒
+                            </button>
+
+                            <!-- 重新整理按鈕 -->
+                            <button class="btn btn-outline-primary btn-sm" @click="loadFiles" :disabled="loading">
+                                <i class="fas fa-sync-alt me-1" :class="{ 'fa-spin': loading }"></i>
+                                重新整理
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 右側搜尋和篩選 -->
+                    <div class="col-md-6">
+                        <div class="row g-2">
+                            <div class="col-8">
+                                <div class="input-group">
+                                    <input type="text"
+                                           class="form-control"
+                                           placeholder="搜尋已刪除的檔案..."
+                                           v-model="searchQuery"
+                                           @input="onSearchInput">
+                                    <button class="btn btn-outline-secondary" @click="loadFiles" :disabled="loading">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <button v-if="searchQuery"
+                                            class="btn btn-outline-secondary"
+                                            @click="clearSearch">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <select class="form-select" v-model="sortOption" @change="onSortChange">
+                                    <option value="UpdatedAt-desc">最近刪除</option>
+                                    <option value="UpdatedAt-asc">最早刪除</option>
+                                    <option value="FileName-asc">檔名 A-Z</option>
+                                    <option value="FileName-desc">檔名 Z-A</option>
+                                    <option value="FileSize-desc">大小（大到小）</option>
+                                    <option value="FileSize-asc">大小（小到大）</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 自動清理提示 -->
+                <div v-if="files.length > 0" class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-warning d-flex align-items-center mb-0" role="alert">
+                            <i class="fas fa-info-circle me-3 fs-5"></i>
+                            <div>
+                                <strong>自動清理提醒：</strong>
+                                檔案將在刪除後 <strong>30 天</strong> 自動永久刪除。
+                                <span v-if="expiringSoonCount > 0" class="text-danger">
+                                    目前有 <strong>{{ expiringSoonCount }}</strong> 個檔案將在 7 天內到期。
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主內容區 -->
+        <div class="container-fluid py-4">
+            <!-- 載入中 -->
+            <div v-if="loading" class="text-center py-5">
+                <div class="loading-spinner"></div>
+                <p class="mt-3 text-muted fs-5">載入已刪除檔案中...</p>
+            </div>
+
+            <!-- 檔案列表 -->
+            <div v-else-if="files.length > 0">
+                <!-- 統計資訊 -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon danger">
+                                    <i class="fas fa-trash"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0 fw-bold">{{ files.length }}</h3>
+                                    <small class="text-muted">已刪除檔案</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon info">
+                                    <i class="fas fa-weight-hanging"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0 fw-bold">{{ totalSize }}</h3>
+                                    <small class="text-muted">總大小</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon warning">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0 fw-bold">{{ oldestDeletedDays }}</h3>
+                                    <small class="text-muted">最長保留天數</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                            <div class="d-flex align-items-center">
+                                <div class="stats-icon" :class="expiringSoonCount > 0 ? 'danger' : 'success'">
+                                    <i :class="expiringSoonCount > 0 ? 'fas fa-exclamation-triangle' : 'fas fa-check-circle'"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0 fw-bold">{{ expiringSoonCount }}</h3>
+                                    <small class="text-muted">7天內到期</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已刪除檔案列表 -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 d-flex align-items-center">
+                                        <i class="fas fa-list me-2 text-primary"></i>
+                                        已刪除檔案
+                                        <span class="badge bg-secondary ms-2">{{ files.length }}</span>
+                                    </h5>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input"
+                                                   type="checkbox"
+                                                   id="selectAll"
+                                                   :checked="isAllSelected"
+                                                   @change="toggleSelectAll">
+                                            <label class="form-check-label fw-medium" for="selectAll">
+                                                全選
+                                            </label>
+                                        </div>
+                                        <div class="d-flex align-items-center text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            <small>共 {{ totalFiles }} 個檔案</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th width="50" class="text-center">選擇</th>
+                                                <th width="80" class="text-center">類型</th>
+                                                <th>檔案名稱</th>
+                                                <th width="120" class="text-center">大小</th>
+                                                <th width="180" class="text-center">刪除時間</th>
+                                                <th width="150" class="text-center">剩餘天數</th>
+                                                <th width="160" class="text-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr v-for="file in files"
+                                                :key="file.Id"
+                                                :class="{ 'table-active': selectedFiles.includes(file.Id) }"
+                                                class="align-middle">
+                                                <td class="text-center">
+                                                    <div class="form-check d-flex justify-content-center">
+                                                        <input class="form-check-input"
+                                                               type="checkbox"
+                                                               :checked="selectedFiles.includes(file.Id)"
+                                                               @change="toggleFileSelection(file.Id)">
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div :class="getFileIconClass(file.FileExtension)">
+                                                        <i :class="getFileIcon(file.FileExtension)"></i>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex flex-column">
+                                                        <div class="fw-medium text-dark">{{ file.FileName }}</div>
+                                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                                            <span :class="getFileTypeBadgeClass(file.FileExtension)">
+                                                                {{ file.FileExtension.replace('.', '').toUpperCase() }}
+                                                            </span>
+                                                            <small class="text-muted">
+                                                                由 {{ file.UploadedByUsername || '未知使用者' }} 上傳
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="fw-medium text-muted">{{ formatFileSize(file.FileSize) }}</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="d-flex flex-column">
+                                                        <small class="fw-medium">{{ formatDateTime(file.UpdatedAt) }}</small>
+                                                        <small class="text-muted">{{ getDeletedTimeAgo(file.UpdatedAt) }}</small>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span :class="getRemainingDaysClass(file.UpdatedAt)">
+                                                        {{ getRemainingDays(file.UpdatedAt) }} 天
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="btn-group btn-group-sm" role="group">
+                                                        <button class="btn btn-outline-success"
+                                                                @click="restoreFile(file)"
+                                                                title="還原檔案">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-info"
+                                                                @click="showFileInfo(file)"
+                                                                title="檢視詳細資訊">
+                                                            <i class="fas fa-info-circle"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-danger"
+                                                                @click="permanentDeleteFile(file)"
+                                                                title="永久刪除">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分頁 -->
+                <nav class="mt-4" v-if="totalPages > 1">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted">
+                            顯示第 {{ (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize, totalFiles) }} 項，
+                            共 {{ totalFiles }} 項
+                        </div>
+                        <ul class="pagination mb-0">
+                            <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                                <button class="page-link" @click="changePage(1)" :disabled="currentPage <= 1">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </button>
+                            </li>
+                            <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                                <button class="page-link" @click="changePage(currentPage - 1)" :disabled="currentPage <= 1">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                            </li>
+
+                            <li v-for="page in visiblePages"
+                                :key="page"
+                                class="page-item"
+                                :class="{ active: page === currentPage }">
+                                <button class="page-link" @click="changePage(page)">
+                                    {{ page }}
+                                </button>
+                            </li>
+
+                            <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                                <button class="page-link" @click="changePage(currentPage + 1)" :disabled="currentPage >= totalPages">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </li>
+                            <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                                <button class="page-link" @click="changePage(totalPages)" :disabled="currentPage >= totalPages">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+
+            <!-- 空狀態 -->
+            <div v-else class="empty-state">
+                <i class="fas fa-trash fa-5x text-muted"></i>
+                <h4>資源回收筒是空的</h4>
+                <p class="mb-4">
+                    {{ searchQuery ? '沒有找到符合搜尋條件的檔案' : '目前沒有任何已刪除的檔案' }}
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="files.html" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        返回檔案管理
+                    </a>
+                    <button v-if="searchQuery" class="btn btn-outline-secondary" @click="clearSearch">
+                        <i class="fas fa-times me-2"></i>
+                        清除搜尋
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 確認對話框 Modal -->
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title d-flex align-items-center">
+                            <i :class="confirmModal.icon" class="me-2"></i>
+                            {{ confirmModal.title }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3">{{ confirmModal.message }}</p>
+                        <div v-if="confirmModal.warning" class="alert alert-warning d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <span>{{ confirmModal.warning }}</span>
+                        </div>
+                        <div v-if="confirmModal.details" class="bg-light p-3 rounded">
+                            <small class="text-muted">{{ confirmModal.details }}</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>
+                            取消
+                        </button>
+                        <button type="button"
+                                class="btn"
+                                :class="confirmModal.buttonClass"
+                                @click="confirmModal.callback"
+                                :disabled="confirmModal.loading">
+                            <span v-if="confirmModal.loading" class="spinner-border spinner-border-sm me-2"></span>
+                            <i v-else :class="confirmModal.buttonIcon" class="me-1"></i>
+                            {{ confirmModal.loading ? '處理中...' : confirmModal.confirmText }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 檔案詳細資訊 Modal -->
+        <div class="modal fade" id="fileInfoModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            檔案詳細資訊
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" v-if="selectedFileInfo">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div :class="getFileIconClass(selectedFileInfo.FileExtension)" class="me-3">
+                                        <i :class="getFileIcon(selectedFileInfo.FileExtension)"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ selectedFileInfo.FileName }}</h6>
+                                        <span :class="getFileTypeBadgeClass(selectedFileInfo.FileExtension)">
+                                            {{ selectedFileInfo.FileExtension.replace('.', '').toUpperCase() }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <div class="d-flex flex-column align-items-end">
+                                    <span class="h4 mb-1">{{ formatFileSize(selectedFileInfo.FileSize) }}</span>
+                                    <small class="text-muted">檔案大小</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-upload text-primary me-2"></i>
+                                            上傳資訊
+                                        </h6>
+                                        <p class="card-text mb-1">
+                                            <strong>上傳者：</strong>{{ selectedFileInfo.UploadedByUsername || '未知使用者' }}
+                                        </p>
+                                        <p class="card-text mb-0">
+                                            <strong>上傳時間：</strong>{{ formatDateTime(selectedFileInfo.UploadedAt) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-trash text-danger me-2"></i>
+                                            刪除資訊
+                                        </h6>
+                                        <p class="card-text mb-1">
+                                            <strong>刪除時間：</strong>{{ formatDateTime(selectedFileInfo.UpdatedAt) }}
+                                        </p>
+                                        <p class="card-text mb-0">
+                                            <strong>剩餘天數：</strong>
+                                            <span :class="getRemainingDaysClass(selectedFileInfo.UpdatedAt)">
+                                                {{ getRemainingDays(selectedFileInfo.UpdatedAt) }} 天
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            此檔案將在刪除後 30 天自動永久刪除。您可以選擇還原檔案或立即永久刪除。
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            關閉
+                        </button>
+                        <button v-if="selectedFileInfo"
+                                type="button"
+                                class="btn btn-success"
+                                @click="restoreFileFromModal">
+                            <i class="fas fa-undo me-1"></i>
+                            還原檔案
+                        </button>
+                        <button v-if="selectedFileInfo"
+                                type="button"
+                                class="btn btn-danger"
+                                @click="permanentDeleteFileFromModal">
+                            <i class="fas fa-times me-1"></i>
+                            永久刪除
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用說明 Modal -->
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-question-circle text-info me-2"></i>
+                            使用說明
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-undo text-success me-2"></i>還原檔案</h6>
+                                <p class="small mb-3">將已刪除的檔案還原到原始位置，檔案將重新出現在檔案管理頁面中。</p>
+
+                                <h6><i class="fas fa-times text-danger me-2"></i>永久刪除</h6>
+                                <p class="small mb-3">永久刪除檔案，此操作無法復原。檔案將從系統中完全移除。</p>
+
+                                <h6><i class="fas fa-trash-alt text-danger me-2"></i>清空回收筒</h6>
+                                <p class="small mb-3">永久刪除回收筒中的所有檔案，此操作無法復原。</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-clock text-warning me-2"></i>自動清理</h6>
+                                <p class="small mb-3">系統會自動清理刪除超過 30 天的檔案，無需手動操作。</p>
+
+                                <h6><i class="fas fa-search text-info me-2"></i>搜尋檔案</h6>
+                                <p class="small mb-3">可以根據檔案名稱搜尋已刪除的檔案，支援模糊搜尋。</p>
+
+                                <h6><i class="fas fa-check-square text-primary me-2"></i>批量操作</h6>
+                                <p class="small mb-3">可以選擇多個檔案進行批量還原或批量永久刪除。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            了解了
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷鍵說明 Modal -->
+        <div class="modal fade" id="shortcutsModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-keyboard text-info me-2"></i>
+                            鍵盤快捷鍵
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>A</kbd></td>
+                                        <td>全選檔案</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>R</kbd></td>
+                                        <td>批量還原選中檔案</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Delete</kbd></td>
+                                        <td>永久刪除選中檔案</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Escape</kbd></td>
+                                        <td>取消選擇</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>F5</kbd></td>
+                                        <td>重新整理頁面</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            關閉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- CDN Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+
+    <script>
+        // 配置常數
+        const API_CONFIG = {
+            FILES_BASE_URL: 'http://localhost:50426',
+            RECYCLE_API: '/api/recyclebin'
+        };
+
+        const FILE_CONFIG = {
+            PAGE_SIZE: 20
+        };
+
+        const UI_CONFIG = {
+            TOAST_DURATION: 4000
+        };
+
+        const MESSAGES = {
+            SUCCESS: {
+                RESTORE: '檔案還原成功',
+                DELETE: '檔案永久刪除成功',
+                BATCH_RESTORE: '批量還原完成',
+                BATCH_DELETE: '批量永久刪除完成',
+                CLEANUP: '資源回收筒清空完成'
+            },
+            ERROR: {
+                RESTORE_FAILED: '還原檔案失敗',
+                DELETE_FAILED: '永久刪除失敗',
+                NETWORK_ERROR: '網路連線錯誤',
+                LOAD_FAILED: '載入檔案列表失敗'
+            }
+        };
+
+        // 工具函數
+        const Utils = {
+            // 格式化檔案大小
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            // 格式化日期時間
+            formatDateTime(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            },
+
+            // 取得檔案類型圖示
+            getFileIcon(extension) {
+                const iconMap = {
+                    'pdf': 'fa-file-pdf',
+                    'doc': 'fa-file-word', 'docx': 'fa-file-word',
+                    'xls': 'fa-file-excel', 'xlsx': 'fa-file-excel',
+                    'ppt': 'fa-file-powerpoint', 'pptx': 'fa-file-powerpoint',
+                    'txt': 'fa-file-text', 'csv': 'fa-file-csv',
+                    'jpg': 'fa-file-image', 'jpeg': 'fa-file-image', 'png': 'fa-file-image',
+                    'gif': 'fa-file-image', 'bmp': 'fa-file-image', 'svg': 'fa-file-image',
+                    'mp4': 'fa-file-video', 'avi': 'fa-file-video', 'mov': 'fa-file-video', 'wmv': 'fa-file-video',
+                    'mp3': 'fa-file-audio', 'wav': 'fa-file-audio', 'flac': 'fa-file-audio', 'aac': 'fa-file-audio',
+                    'zip': 'fa-file-archive', 'rar': 'fa-file-archive', '7z': 'fa-file-archive'
+                };
+                return 'fas ' + (iconMap[extension.toLowerCase().replace('.', '')] || 'fa-file');
+            },
+
+            // 顯示 Toast 通知
+            showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toast-container');
+                const toastId = 'toast-' + Date.now();
+
+                const toast = document.createElement('div');
+                toast.id = toastId;
+                toast.className = `toast align-items-center text-white bg-${type} border-0`;
+                toast.setAttribute('role', 'alert');
+                toast.innerHTML = `
+                            <div class="d-flex">
+                                <div class="toast-body d-flex align-items-center">
+                                    <i class="fas ${this.getToastIcon(type)} me-2"></i>
+                                    ${message}
+                                </div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                            </div>
+                        `;
+
+                toastContainer.appendChild(toast);
+
+                const bsToast = new bootstrap.Toast(toast, {
+                    autohide: true,
+                    delay: UI_CONFIG.TOAST_DURATION
+                });
+                bsToast.show();
+
+                // 自動移除
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, UI_CONFIG.TOAST_DURATION + 500);
+            },
+
+            getToastIcon(type) {
+                const iconMap = {
+                    'success': 'fa-check-circle',
+                    'danger': 'fa-exclamation-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'info': 'fa-info-circle'
+                };
+                return iconMap[type] || 'fa-info-circle';
+            },
+
+            // 防抖函數
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            // 計算時間差
+            getTimeAgo(dateString) {
+                const now = new Date();
+                const date = new Date(dateString);
+                const diffTime = Math.abs(now - date);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 1) return '1 天前';
+                if (diffDays < 7) return `${diffDays} 天前`;
+                if (diffDays < 30) return `${Math.floor(diffDays / 7)} 週前`;
+                return `${Math.floor(diffDays / 30)} 個月前`;
+            }
+        };
+
+        // 修正的 API 請求（解決 CORS 問題）
+        const API = {
+            async request(url, options = {}) {
+                const defaultOptions = {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    // 移除 credentials: 'include' 以避免 CORS 問題
+                    mode: 'cors'
+                };
+
+                const finalOptions = { ...defaultOptions, ...options };
+                const fullUrl = API_CONFIG.FILES_BASE_URL + url;
+
+                try {
+                    console.log('API 請求:', finalOptions.method, fullUrl);
+                    const response = await fetch(fullUrl, finalOptions);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API 回應:', data);
+                    return data;
+                } catch (error) {
+                    console.error('API 請求錯誤:', error);
+                    throw new Error(error.message || MESSAGES.ERROR.NETWORK_ERROR);
+                }
+            },
+
+            async get(url, params = {}) {
+                const queryString = new URLSearchParams(params).toString();
+                const fullUrl = queryString ? `${url}?${queryString}` : url;
+                return this.request(fullUrl);
+            },
+
+            async post(url, data = {}) {
+                return this.request(url, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+            },
+
+            async delete(url) {
+                return this.request(url, { method: 'DELETE' });
+            }
+        };
+
+        // 資源回收筒 API
+        const RecycleAPI = {
+            async getDeletedFiles(searchParams = {}) {
+                try {
+                    const params = {
+                        Page: searchParams.page || 1,
+                        PageSize: searchParams.pageSize || FILE_CONFIG.PAGE_SIZE,
+                        FileName: searchParams.fileName || '',
+                        SortBy: searchParams.sortBy || 'UpdatedAt',
+                        SortOrder: searchParams.sortOrder || 'desc'
+                    };
+
+                    // 移除空值參數
+                    Object.keys(params).forEach(key => {
+                        if (!params[key] || params[key] === '') delete params[key];
+                    });
+
+                    const response = await API.get(API_CONFIG.RECYCLE_API + '/list', params);
+
+                    if (response.Success && response.Data) {
+                        return {
+                            success: true,
+                            data: response.Data.Data || [],
+                            totalCount: response.Data.TotalCount || 0,
+                            totalPages: response.Data.TotalPages || 1,
+                            currentPage: response.Data.Page || 1
+                        };
+                    } else {
+                        return { success: false, message: response.Message || MESSAGES.ERROR.LOAD_FAILED };
+                    }
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+            },
+
+            async restoreFile(fileId) {
+                try {
+                    const response = await API.post(`${API_CONFIG.RECYCLE_API}/restore/${fileId}`, {});
+
+                    if (response.Success) {
+                        return { success: true, message: response.Message || MESSAGES.SUCCESS.RESTORE };
+                    } else {
+                        return { success: false, message: response.Message || MESSAGES.ERROR.RESTORE_FAILED };
+                    }
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+            },
+
+            async permanentDelete(fileId) {
+                try {
+                    const response = await API.delete(`${API_CONFIG.RECYCLE_API}/permanent/${fileId}`);
+
+                    if (response.Success) {
+                        return { success: true, message: response.Message || MESSAGES.SUCCESS.DELETE };
+                    } else {
+                        return { success: false, message: response.Message || MESSAGES.ERROR.DELETE_FAILED };
+                    }
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+            },
+
+            async cleanup() {
+                try {
+                    const response = await API.post(`${API_CONFIG.RECYCLE_API}/cleanup`, {});
+
+                    if (response.Success) {
+                        return { success: true, message: response.Message || MESSAGES.SUCCESS.CLEANUP };
+                    } else {
+                        return { success: false, message: response.Message };
+                    }
+                } catch (error) {
+                    return { success: false, message: error.message };
+                }
+            }
+        };
+
+
+        // Vue 應用程式 - 修正版
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    // 檔案資料 - 使用普通賦值而非 $set
+                    files: [],
+                    selectedFiles: [],
+                    selectedFileInfo: null,
+
+                    // 檢視狀態
+                    loading: false,
+
+                    // 搜尋和排序
+                    searchQuery: '',
+                    sortOption: 'UpdatedAt-desc',
+                    searchTimeout: null,
+
+                    // 分頁
+                    currentPage: 1,
+                    totalPages: 1,
+                    totalFiles: 0,
+                    pageSize: FILE_CONFIG.PAGE_SIZE,
+
+                    // 確認對話框
+                    confirmModal: {
+                        show: false,
+                        title: '',
+                        message: '',
+                        warning: '',
+                        details: '',
+                        icon: '',
+                        buttonClass: '',
+                        buttonIcon: '',
+                        confirmText: '',
+                        callback: null,
+                        loading: false
+                    }
+                };
+            },
+
+            computed: {
+                // 分頁顯示頁碼
+                visiblePages() {
+                    const pages = [];
+                    const maxVisible = 5;
+                    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+                    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+                    if (end - start + 1 < maxVisible) {
+                        start = Math.max(1, end - maxVisible + 1);
+                    }
+
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+
+                    return pages;
+                },
+
+                // 是否有選中的檔案
+                hasSelection() {
+                    return this.selectedFiles.length > 0;
+                },
+
+                // 是否全選
+                isAllSelected() {
+                    return this.files.length > 0 && this.selectedFiles.length === this.files.length;
+                },
+
+                // 總大小
+                totalSize() {
+                    if (this.files.length === 0) return '0 B';
+                    const total = this.files.reduce((sum, file) => sum + file.FileSize, 0);
+                    return Utils.formatFileSize(total);
+                },
+
+                // 最舊檔案的刪除天數
+                oldestDeletedDays() {
+                    if (this.files.length === 0) return 0;
+
+                    const oldest = this.files.reduce((oldest, file) => {
+                        const deletedDate = new Date(file.UpdatedAt);
+                        const oldestDate = new Date(oldest.UpdatedAt);
+                        return deletedDate < oldestDate ? file : oldest;
+                    });
+
+                    const deletedDate = new Date(oldest.UpdatedAt);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - deletedDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    return diffDays;
+                },
+
+                // 即將到期的檔案數量（7天內）
+                expiringSoonCount() {
+                    return this.files.filter(file => {
+                        const deletedDate = new Date(file.UpdatedAt);
+                        const expiryDate = new Date(deletedDate);
+                        expiryDate.setDate(expiryDate.getDate() + 30);
+
+                        const now = new Date();
+                        const sevenDaysFromNow = new Date();
+                        sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+                        return expiryDate <= sevenDaysFromNow && expiryDate > now;
+                    }).length;
+                }
+            },
+
+            async mounted() {
+                console.log('Vue 應用程式已掛載');
+
+                // 等待下一個 tick 確保 DOM 已準備好
+                await this.$nextTick();
+
+                // 初始化頁面
+                await this.loadFiles();
+
+                // 設定鍵盤快捷鍵
+                this.setupKeyboardShortcuts();
+
+                // 定期檢查到期檔案
+                this.startExpiryCheck();
+            },
+
+            methods: {
+                // 載入已刪除檔案列表 - 修正版
+                async loadFiles() {
+                    this.loading = true;
+
+                    try {
+                        const params = {
+                            page: this.currentPage,
+                            pageSize: this.pageSize,
+                            fileName: this.searchQuery,
+                            sortBy: this.sortOption.split('-')[0],
+                            sortOrder: this.sortOption.split('-')[1]
+                        };
+
+                        console.log('載入檔案參數:', params);
+                        const result = await RecycleAPI.getDeletedFiles(params);
+                        console.log('載入檔案結果:', result);
+
+                        if (result.success) {
+                            // 使用直接賦值而非 $set，避免 Vue 響應式錯誤
+                            this.files = result.data || [];
+                            this.totalFiles = result.totalCount || 0;
+                            this.totalPages = result.totalPages || 1;
+                            this.currentPage = result.currentPage || 1;
+
+                            console.log('檔案已更新:', this.files.length, '個檔案');
+
+                            // 清除不存在檔案的選擇
+                            this.selectedFiles = this.selectedFiles.filter(id =>
+                                this.files.some(file => file.Id === id)
+                            );
+
+                            // 強制重新渲染
+                            this.$forceUpdate();
+
+                            // 顯示到期提醒
+                            this.$nextTick(() => {
+                                this.checkExpiringFiles();
+                            });
+                        } else {
+                            Utils.showToast(result.message || MESSAGES.ERROR.LOAD_FAILED, 'danger');
+                            this.files = [];
+                        }
+                    } catch (error) {
+                        console.error('Load deleted files error:', error);
+                        Utils.showToast(MESSAGES.ERROR.NETWORK_ERROR, 'danger');
+                        this.files = [];
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // 檢查即將到期的檔案
+                checkExpiringFiles() {
+                    if (this.expiringSoonCount > 0) {
+                        setTimeout(() => {
+                            Utils.showToast(
+                                `提醒：有 ${this.expiringSoonCount} 個檔案將在 7 天內自動永久刪除`,
+                                'warning'
+                            );
+                        }, 1000);
+                    }
+                },
+
+                // 開始到期檢查
+                startExpiryCheck() {
+                    // 每小時檢查一次
+                    setInterval(() => {
+                        this.loadFiles();
+                    }, 3600000);
+                },
+
+                // 搜尋輸入處理
+                onSearchInput: Utils.debounce(function () {
+                    this.currentPage = 1;
+                    this.loadFiles();
+                }, 500),
+
+                // 排序變更處理
+                onSortChange() {
+                    this.currentPage = 1;
+                    this.loadFiles();
+                },
+
+                // 清除搜尋
+                clearSearch() {
+                    this.searchQuery = '';
+                    this.currentPage = 1;
+                    this.loadFiles();
+                },
+
+                // 分頁變更
+                async changePage(page) {
+                    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+                        this.currentPage = page;
+                        await this.loadFiles();
+                        // 滾動到頂部
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                },
+
+                // 檔案選擇切換
+                toggleFileSelection(fileId) {
+                    const index = this.selectedFiles.indexOf(fileId);
+                    if (index > -1) {
+                        this.selectedFiles.splice(index, 1);
+                    } else {
+                        this.selectedFiles.push(fileId);
+                    }
+                },
+
+                // 全選/取消全選
+                toggleSelectAll() {
+                    if (this.isAllSelected) {
+                        this.selectedFiles = [];
+                    } else {
+                        this.selectedFiles = this.files.map(file => file.Id);
+                    }
+                },
+
+                // 清除選擇
+                clearSelection() {
+                    this.selectedFiles = [];
+                },
+
+                // 顯示檔案詳細資訊
+                showFileInfo(file) {
+                    this.selectedFileInfo = file;
+                    const modal = new bootstrap.Modal(document.getElementById('fileInfoModal'));
+                    modal.show();
+                },
+
+                // 從詳細資訊Modal還原檔案
+                restoreFileFromModal() {
+                    if (this.selectedFileInfo) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('fileInfoModal'));
+                        modal.hide();
+                        this.restoreFile(this.selectedFileInfo);
+                    }
+                },
+
+                // 從詳細資訊Modal永久刪除檔案
+                permanentDeleteFileFromModal() {
+                    if (this.selectedFileInfo) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('fileInfoModal'));
+                        modal.hide();
+                        this.permanentDeleteFile(this.selectedFileInfo);
+                    }
+                },
+
+                // 還原檔案
+                async restoreFile(file) {
+                    this.showConfirmDialog({
+                        title: '還原檔案',
+                        message: `確定要還原檔案 "${file.FileName}" 嗎？`,
+                        details: '檔案將回到原始位置，您可以在檔案管理頁面中找到它。',
+                        icon: 'fas fa-undo text-success',
+                        buttonClass: 'btn-success',
+                        buttonIcon: 'fas fa-undo',
+                        confirmText: '還原',
+                        callback: async () => {
+                            await this.performRestoreFile(file.Id, file.FileName);
+                        }
+                    });
+                },
+
+                // 執行檔案還原
+                async performRestoreFile(fileId, fileName) {
+                    this.confirmModal.loading = true;
+
+                    try {
+                        const result = await RecycleAPI.restoreFile(fileId);
+                        if (result.success) {
+                            Utils.showToast(`檔案 "${fileName}" ${result.message}`, 'success');
+
+                            // 從選擇列表中移除
+                            const index = this.selectedFiles.indexOf(fileId);
+                            if (index > -1) {
+                                this.selectedFiles.splice(index, 1);
+                            }
+
+                            // 關閉對話框並重新載入
+                            this.hideConfirmDialog();
+                            await this.loadFiles();
+                        } else {
+                            Utils.showToast(result.message, 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Restore error:', error);
+                        Utils.showToast('還原檔案時發生錯誤', 'danger');
+                    } finally {
+                        this.confirmModal.loading = false;
+                    }
+                },
+
+                // 永久刪除檔案
+                async permanentDeleteFile(file) {
+                    const remainingDays = this.getRemainingDays(file.UpdatedAt);
+                    this.showConfirmDialog({
+                        title: '永久刪除檔案',
+                        message: `確定要永久刪除檔案 "${file.FileName}" 嗎？`,
+                        warning: '此操作無法復原，檔案將從系統中完全移除！',
+                        details: `此檔案還有 ${remainingDays} 天會自動刪除，您也可以選擇立即永久刪除。`,
+                        icon: 'fas fa-exclamation-triangle text-danger',
+                        buttonClass: 'btn-danger',
+                        buttonIcon: 'fas fa-times',
+                        confirmText: '永久刪除',
+                        callback: async () => {
+                            await this.performPermanentDelete(file.Id, file.FileName);
+                        }
+                    });
+                },
+
+                // 執行永久刪除
+                async performPermanentDelete(fileId, fileName) {
+                    this.confirmModal.loading = true;
+
+                    try {
+                        const result = await RecycleAPI.permanentDelete(fileId);
+                        if (result.success) {
+                            Utils.showToast(`檔案 "${fileName}" ${result.message}`, 'success');
+
+                            // 從選擇列表中移除
+                            const index = this.selectedFiles.indexOf(fileId);
+                            if (index > -1) {
+                                this.selectedFiles.splice(index, 1);
+                            }
+
+                            // 關閉對話框並重新載入
+                            this.hideConfirmDialog();
+                            await this.loadFiles();
+                        } else {
+                            Utils.showToast(result.message, 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Permanent delete error:', error);
+                        Utils.showToast('永久刪除時發生錯誤', 'danger');
+                    } finally {
+                        this.confirmModal.loading = false;
+                    }
+                },
+
+                // 批量還原
+                async batchRestore() {
+                    if (this.selectedFiles.length === 0) {
+                        Utils.showToast('請先選擇要還原的檔案', 'warning');
+                        return;
+                    }
+
+                    this.showConfirmDialog({
+                        title: '批量還原',
+                        message: `確定要還原 ${this.selectedFiles.length} 個檔案嗎？`,
+                        details: '所有選中的檔案將回到原始位置。',
+                        icon: 'fas fa-undo text-success',
+                        buttonClass: 'btn-success',
+                        buttonIcon: 'fas fa-undo',
+                        confirmText: '批量還原',
+                        callback: async () => {
+                            await this.performBatchRestore();
+                        }
+                    });
+                },
+
+                // 執行批量還原
+                async performBatchRestore() {
+                    this.confirmModal.loading = true;
+
+                    try {
+                        let successCount = 0;
+                        let failCount = 0;
+
+                        for (const fileId of [...this.selectedFiles]) {
+                            try {
+                                const result = await RecycleAPI.restoreFile(fileId);
+                                if (result.success) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                }
+                            } catch (error) {
+                                failCount++;
+                            }
+                        }
+
+                        // 顯示結果
+                        if (successCount > 0) {
+                            const message = failCount > 0
+                                ? `成功還原 ${successCount} 個檔案，${failCount} 個失敗`
+                                : `成功還原 ${successCount} 個檔案`;
+                            Utils.showToast(message, failCount > 0 ? 'warning' : 'success');
+                        } else {
+                            Utils.showToast('批量還原失敗', 'danger');
+                        }
+
+                        // 清除選擇並重新載入
+                        this.selectedFiles = [];
+                        this.hideConfirmDialog();
+                        await this.loadFiles();
+
+                    } catch (error) {
+                        console.error('Batch restore error:', error);
+                        Utils.showToast('批量還原時發生錯誤', 'danger');
+                    } finally {
+                        this.confirmModal.loading = false;
+                    }
+                },
+
+                // 批量永久刪除
+                async batchPermanentDelete() {
+                    if (this.selectedFiles.length === 0) {
+                        Utils.showToast('請先選擇要永久刪除的檔案', 'warning');
+                        return;
+                    }
+
+                    this.showConfirmDialog({
+                        title: '批量永久刪除',
+                        message: `確定要永久刪除 ${this.selectedFiles.length} 個檔案嗎？`,
+                        warning: '此操作無法復原，所有選中的檔案將從系統中完全移除！',
+                        details: '請仔細確認，這個操作無法撤銷。',
+                        icon: 'fas fa-exclamation-triangle text-danger',
+                        buttonClass: 'btn-danger',
+                        buttonIcon: 'fas fa-times',
+                        confirmText: '永久刪除',
+                        callback: async () => {
+                            await this.performBatchPermanentDelete();
+                        }
+                    });
+                },
+
+                // 執行批量永久刪除
+                async performBatchPermanentDelete() {
+                    this.confirmModal.loading = true;
+
+                    try {
+                        let successCount = 0;
+                        let failCount = 0;
+
+                        for (const fileId of [...this.selectedFiles]) {
+                            try {
+                                const result = await RecycleAPI.permanentDelete(fileId);
+                                if (result.success) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                }
+                            } catch (error) {
+                                failCount++;
+                            }
+                        }
+
+                        // 顯示結果
+                        if (successCount > 0) {
+                            const message = failCount > 0
+                                ? `成功永久刪除 ${successCount} 個檔案，${failCount} 個失敗`
+                                : `成功永久刪除 ${successCount} 個檔案`;
+                            Utils.showToast(message, failCount > 0 ? 'warning' : 'success');
+                        } else {
+                            Utils.showToast('批量永久刪除失敗', 'danger');
+                        }
+
+                        // 清除選擇並重新載入
+                        this.selectedFiles = [];
+                        this.hideConfirmDialog();
+                        await this.loadFiles();
+
+                    } catch (error) {
+                        console.error('Batch permanent delete error:', error);
+                        Utils.showToast('批量永久刪除時發生錯誤', 'danger');
+                    } finally {
+                        this.confirmModal.loading = false;
+                    }
+                },
+
+                // 清空回收筒
+                async cleanupRecycleBin() {
+                    if (this.files.length === 0) {
+                        Utils.showToast('回收筒已經是空的', 'info');
+                        return;
+                    }
+
+                    this.showConfirmDialog({
+                        title: '清空回收筒',
+                        message: `確定要清空整個資源回收筒嗎？`,
+                        warning: '此操作會永久刪除回收筒中的所有檔案，且無法復原！',
+                        details: `目前回收筒中有 ${this.files.length} 個檔案，總大小為 ${this.totalSize}。`,
+                        icon: 'fas fa-trash-alt text-danger',
+                        buttonClass: 'btn-danger',
+                        buttonIcon: 'fas fa-trash-alt',
+                        confirmText: '清空回收筒',
+                        callback: async () => {
+                            await this.performCleanup();
+                        }
+                    });
+                },
+
+                // 執行清空回收筒
+                async performCleanup() {
+                    this.confirmModal.loading = true;
+
+                    try {
+                        const result = await RecycleAPI.cleanup();
+                        if (result.success) {
+                            Utils.showToast(result.message, 'success');
+
+                            // 清除選擇並重新載入
+                            this.selectedFiles = [];
+                            this.hideConfirmDialog();
+                            await this.loadFiles();
+                        } else {
+                            Utils.showToast(result.message, 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Cleanup error:', error);
+                        Utils.showToast('清空回收筒時發生錯誤', 'danger');
+                    } finally {
+                        this.confirmModal.loading = false;
+                    }
+                },
+
+                // 顯示使用說明
+                showHelp() {
+                    const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+                    modal.show();
+                },
+
+                // 顯示快捷鍵說明
+                showShortcuts() {
+                    const modal = new bootstrap.Modal(document.getElementById('shortcutsModal'));
+                    modal.show();
+                },
+
+                // 顯示確認對話框
+                showConfirmDialog(options) {
+                    this.confirmModal = {
+                        show: true,
+                        title: options.title,
+                        message: options.message,
+                        warning: options.warning || '',
+                        details: options.details || '',
+                        icon: options.icon,
+                        buttonClass: options.buttonClass,
+                        buttonIcon: options.buttonIcon,
+                        confirmText: options.confirmText,
+                        callback: options.callback,
+                        loading: false
+                    };
+
+                    this.$nextTick(() => {
+                        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                        modal.show();
+                    });
+                },
+
+                // 隱藏確認對話框
+                hideConfirmDialog() {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    this.confirmModal.show = false;
+                },
+
+                // 工具方法
+                formatFileSize: Utils.formatFileSize,
+                formatDateTime: Utils.formatDateTime,
+                getFileIcon: Utils.getFileIcon,
+
+                // 取得檔案圖示樣式類別
+                getFileIconClass(extension) {
+                    const ext = extension.toLowerCase();
+                    if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg'].includes(ext)) {
+                        return 'file-icon image';
+                    } else if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'].includes(ext)) {
+                        return 'file-icon document';
+                    } else if (['.mp4', '.avi', '.mov', '.wmv'].includes(ext)) {
+                        return 'file-icon video';
+                    } else if (['.mp3', '.wav', '.flac', '.aac'].includes(ext)) {
+                        return 'file-icon audio';
+                    } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+                        return 'file-icon archive';
+                    } else {
+                        return 'file-icon default';
+                    }
+                },
+
+                // 取得檔案類型標籤樣式
+                getFileTypeBadgeClass(extension) {
+                    const ext = extension.toLowerCase();
+                    if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg'].includes(ext)) {
+                        return 'file-type-badge file-type-image';
+                    } else if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'].includes(ext)) {
+                        return 'file-type-badge file-type-document';
+                    } else if (['.mp4', '.avi', '.mov', '.wmv'].includes(ext)) {
+                        return 'file-type-badge file-type-video';
+                    } else if (['.mp3', '.wav', '.flac', '.aac'].includes(ext)) {
+                        return 'file-type-badge file-type-audio';
+                    } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+                        return 'file-type-badge file-type-archive';
+                    } else {
+                        return 'file-type-badge file-type-default';
+                    }
+                },
+
+                // 取得刪除時間描述
+                getDeletedTimeAgo(dateString) {
+                    return Utils.getTimeAgo(dateString);
+                },
+
+                // 計算剩餘天數
+                getRemainingDays(dateString) {
+                    const deletedDate = new Date(dateString);
+                    const expiryDate = new Date(deletedDate);
+                    expiryDate.setDate(expiryDate.getDate() + 30); // 30天後到期
+
+                    const now = new Date();
+                    const diffTime = expiryDate - now;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    return Math.max(0, diffDays);
+                },
+
+                // 取得剩餘天數樣式
+                getRemainingDaysClass(dateString) {
+                    const remainingDays = this.getRemainingDays(dateString);
+                    if (remainingDays <= 3) {
+                        return 'badge bg-danger fw-bold';
+                    } else if (remainingDays <= 7) {
+                        return 'badge bg-warning text-dark fw-bold';
+                    } else {
+                        return 'badge bg-success';
+                    }
+                },
+
+                // 設定鍵盤快捷鍵
+                setupKeyboardShortcuts() {
+                    document.addEventListener('keydown', (e) => {
+                        // 如果在輸入框中，忽略快捷鍵
+                        if (e.target.matches('input, textarea, select')) return;
+
+                        switch (true) {
+                            case e.ctrlKey && e.key === 'a':
+                                e.preventDefault();
+                                this.toggleSelectAll();
+                                break;
+                            case e.ctrlKey && e.key === 'r':
+                                e.preventDefault();
+                                if (this.selectedFiles.length > 0) {
+                                    this.batchRestore();
+                                }
+                                break;
+                            case e.key === 'Delete':
+                                e.preventDefault();
+                                if (this.selectedFiles.length > 0) {
+                                    this.batchPermanentDelete();
+                                }
+                                break;
+                            case e.key === 'Escape':
+                                this.clearSelection();
+                                break;
+                            case e.key === 'F5':
+                                e.preventDefault();
+                                this.loadFiles();
+                                break;
+                        }
+                    });
+                }
+            },
+
+            // 組件銷毀前清理
+            beforeDestroy() {
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+            }
+        });
+
+
+
+        //// Vue 應用程式
+        //new Vue({
+        //    el: '#app',
+        //    data() {
+        //        return {
+        //            // 檔案資料
+        //            files: [],
+        //            selectedFiles: [],
+        //            selectedFileInfo: null,
+
+        //            // 檢視狀態
+        //            loading: false,
+
+        //            // 搜尋和排序
+        //            searchQuery: '',
+        //            sortOption: 'UpdatedAt-desc',
+        //            searchTimeout: null,
+
+        //            // 分頁
+        //            currentPage: 1,
+        //            totalPages: 1,
+        //            totalFiles: 0,
+        //            pageSize: FILE_CONFIG.PAGE_SIZE,
+
+        //            // 確認對話框
+        //            confirmModal: {
+        //                show: false,
+        //                title: '',
+        //                message: '',
+        //                warning: '',
+        //                details: '',
+        //                icon: '',
+        //                buttonClass: '',
+        //                buttonIcon: '',
+        //                confirmText: '',
+        //                callback: null,
+        //                loading: false
+        //            }
+        //        };
+        //    },
+
+        //    computed: {
+        //        // 分頁顯示頁碼
+        //        visiblePages() {
+        //            const pages = [];
+        //            const maxVisible = 5;
+        //            let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+        //            let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+        //            if (end - start + 1 < maxVisible) {
+        //                start = Math.max(1, end - maxVisible + 1);
+        //            }
+
+        //            for (let i = start; i <= end; i++) {
+        //                pages.push(i);
+        //            }
+
+        //            return pages;
+        //        },
+
+        //        // 是否有選中的檔案
+        //        hasSelection() {
+        //            return this.selectedFiles.length > 0;
+        //        },
+
+        //        // 是否全選
+        //        isAllSelected() {
+        //            return this.files.length > 0 && this.selectedFiles.length === this.files.length;
+        //        },
+
+        //        // 總大小
+        //        totalSize() {
+        //            if (this.files.length === 0) return '0 B';
+        //            const total = this.files.reduce((sum, file) => sum + file.FileSize, 0);
+        //            return Utils.formatFileSize(total);
+        //        },
+
+        //        // 最舊檔案的刪除天數
+        //        oldestDeletedDays() {
+        //            if (this.files.length === 0) return 0;
+
+        //            const oldest = this.files.reduce((oldest, file) => {
+        //                const deletedDate = new Date(file.UpdatedAt);
+        //                const oldestDate = new Date(oldest.UpdatedAt);
+        //                return deletedDate < oldestDate ? file : oldest;
+        //            });
+
+        //            const deletedDate = new Date(oldest.UpdatedAt);
+        //            const now = new Date();
+        //            const diffTime = Math.abs(now - deletedDate);
+        //            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        //            return diffDays;
+        //        },
+
+        //        // 即將到期的檔案數量（7天內）
+        //        expiringSoonCount() {
+        //            return this.files.filter(file => {
+        //                const deletedDate = new Date(file.UpdatedAt);
+        //                const expiryDate = new Date(deletedDate);
+        //                expiryDate.setDate(expiryDate.getDate() + 30);
+
+        //                const now = new Date();
+        //                const sevenDaysFromNow = new Date();
+        //                sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+        //                return expiryDate <= sevenDaysFromNow && expiryDate > now;
+        //            }).length;
+        //        }
+        //    },
+
+        //    async mounted() {
+        //        console.log('Vue 應用程式已掛載');
+
+        //        // 初始化頁面
+        //        await this.loadFiles();
+
+        //        // 設定鍵盤快捷鍵
+        //        this.setupKeyboardShortcuts();
+
+        //        // 定期檢查到期檔案
+        //        this.startExpiryCheck();
+        //    },
+
+        //    methods: {
+        //        // 載入已刪除檔案列表
+        //        async loadFiles() {
+        //            this.loading = true;
+
+        //            try {
+        //                const params = {
+        //                    page: this.currentPage,
+        //                    pageSize: this.pageSize,
+        //                    fileName: this.searchQuery,
+        //                    sortBy: this.sortOption.split('-')[0],
+        //                    sortOrder: this.sortOption.split('-')[1]
+        //                };
+
+        //                console.log('載入檔案參數:', params);
+        //                const result = await RecycleAPI.getDeletedFiles(params);
+        //                console.log('載入檔案結果:', result);
+
+        //                if (result.success) {
+        //                    // 使用 Vue.set 確保響應式更新
+        //                    this.$set(this, 'files', result.data || []);
+        //                    this.totalFiles = result.totalCount || 0;
+        //                    this.totalPages = result.totalPages || 1;
+        //                    this.currentPage = result.currentPage || 1;
+
+        //                    // 清除不存在檔案的選擇
+        //                    this.selectedFiles = this.selectedFiles.filter(id =>
+        //                        this.files.some(file => file.Id === id)
+        //                    );
+
+        //                    // 顯示到期提醒
+        //                    this.checkExpiringFiles();
+        //                } else {
+        //                    Utils.showToast(result.message || MESSAGES.ERROR.LOAD_FAILED, 'danger');
+        //                    this.$set(this, 'files', []);
+        //                }
+        //            } catch (error) {
+        //                console.error('Load deleted files error:', error);
+        //                Utils.showToast(MESSAGES.ERROR.NETWORK_ERROR, 'danger');
+        //                this.$set(this, 'files', []);
+        //            } finally {
+        //                this.loading = false;
+        //            }
+        //        },
+
+        //        // 檢查即將到期的檔案
+        //        checkExpiringFiles() {
+        //            if (this.expiringSoonCount > 0) {
+        //                setTimeout(() => {
+        //                    Utils.showToast(
+        //                        `提醒：有 ${this.expiringSoonCount} 個檔案將在 7 天內自動永久刪除`,
+        //                        'warning'
+        //                    );
+        //                }, 1000);
+        //            }
+        //        },
+
+        //        // 開始到期檢查
+        //        startExpiryCheck() {
+        //            // 每小時檢查一次
+        //            setInterval(() => {
+        //                this.loadFiles();
+        //            }, 3600000);
+        //        },
+
+        //        // 搜尋輸入處理
+        //        onSearchInput: Utils.debounce(function () {
+        //            this.currentPage = 1;
+        //            this.loadFiles();
+        //        }, 500),
+
+        //        // 排序變更處理
+        //        onSortChange() {
+        //            this.currentPage = 1;
+        //            this.loadFiles();
+        //        },
+
+        //        // 清除搜尋
+        //        clearSearch() {
+        //            this.searchQuery = '';
+        //            this.currentPage = 1;
+        //            this.loadFiles();
+        //        },
+
+        //        // 分頁變更
+        //        async changePage(page) {
+        //            if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+        //                this.currentPage = page;
+        //                await this.loadFiles();
+        //                // 滾動到頂部
+        //                window.scrollTo({ top: 0, behavior: 'smooth' });
+        //            }
+        //        },
+
+        //        // 檔案選擇切換
+        //        toggleFileSelection(fileId) {
+        //            const index = this.selectedFiles.indexOf(fileId);
+        //            if (index > -1) {
+        //                this.selectedFiles.splice(index, 1);
+        //            } else {
+        //                this.selectedFiles.push(fileId);
+        //            }
+        //        },
+
+        //        // 全選/取消全選
+        //        toggleSelectAll() {
+        //            if (this.isAllSelected) {
+        //                this.selectedFiles = [];
+        //            } else {
+        //                this.selectedFiles = this.files.map(file => file.Id);
+        //            }
+        //        },
+
+        //        // 清除選擇
+        //        clearSelection() {
+        //            this.selectedFiles = [];
+        //        },
+
+        //        // 顯示檔案詳細資訊
+        //        showFileInfo(file) {
+        //            this.selectedFileInfo = file;
+        //            const modal = new bootstrap.Modal(document.getElementById('fileInfoModal'));
+        //            modal.show();
+        //        },
+
+        //        // 從詳細資訊Modal還原檔案
+        //        restoreFileFromModal() {
+        //            if (this.selectedFileInfo) {
+        //                const modal = bootstrap.Modal.getInstance(document.getElementById('fileInfoModal'));
+        //                modal.hide();
+        //                this.restoreFile(this.selectedFileInfo);
+        //            }
+        //        },
+
+        //        // 從詳細資訊Modal永久刪除檔案
+        //        permanentDeleteFileFromModal() {
+        //            if (this.selectedFileInfo) {
+        //                const modal = bootstrap.Modal.getInstance(document.getElementById('fileInfoModal'));
+        //                modal.hide();
+        //                this.permanentDeleteFile(this.selectedFileInfo);
+        //            }
+        //        },
+
+        //        // 還原檔案
+        //        async restoreFile(file) {
+        //            this.showConfirmDialog({
+        //                title: '還原檔案',
+        //                message: `確定要還原檔案 "${file.FileName}" 嗎？`,
+        //                details: '檔案將回到原始位置，您可以在檔案管理頁面中找到它。',
+        //                icon: 'fas fa-undo text-success',
+        //                buttonClass: 'btn-success',
+        //                buttonIcon: 'fas fa-undo',
+        //                confirmText: '還原',
+        //                callback: async () => {
+        //                    await this.performRestoreFile(file.Id, file.FileName);
+        //                }
+        //            });
+        //        },
+
+        //        // 執行檔案還原
+        //        async performRestoreFile(fileId, fileName) {
+        //            this.confirmModal.loading = true;
+
+        //            try {
+        //                const result = await RecycleAPI.restoreFile(fileId);
+        //                if (result.success) {
+        //                    Utils.showToast(`檔案 "${fileName}" ${result.message}`, 'success');
+
+        //                    // 從選擇列表中移除
+        //                    const index = this.selectedFiles.indexOf(fileId);
+        //                    if (index > -1) {
+        //                        this.selectedFiles.splice(index, 1);
+        //                    }
+
+        //                    // 關閉對話框並重新載入
+        //                    this.hideConfirmDialog();
+        //                    await this.loadFiles();
+        //                } else {
+        //                    Utils.showToast(result.message, 'danger');
+        //                }
+        //            } catch (error) {
+        //                console.error('Restore error:', error);
+        //                Utils.showToast('還原檔案時發生錯誤', 'danger');
+        //            } finally {
+        //                this.confirmModal.loading = false;
+        //            }
+        //        },
+
+        //        // 永久刪除檔案
+        //        async permanentDeleteFile(file) {
+        //            const remainingDays = this.getRemainingDays(file.UpdatedAt);
+        //            this.showConfirmDialog({
+        //                title: '永久刪除檔案',
+        //                message: `確定要永久刪除檔案 "${file.FileName}" 嗎？`,
+        //                warning: '此操作無法復原，檔案將從系統中完全移除！',
+        //                details: `此檔案還有 ${remainingDays} 天會自動刪除，您也可以選擇立即永久刪除。`,
+        //                icon: 'fas fa-exclamation-triangle text-danger',
+        //                buttonClass: 'btn-danger',
+        //                buttonIcon: 'fas fa-times',
+        //                confirmText: '永久刪除',
+        //                callback: async () => {
+        //                    await this.performPermanentDelete(file.Id, file.FileName);
+        //                }
+        //            });
+        //        },
+
+        //        // 執行永久刪除
+        //        async performPermanentDelete(fileId, fileName) {
+        //            this.confirmModal.loading = true;
+
+        //            try {
+        //                const result = await RecycleAPI.permanentDelete(fileId);
+        //                if (result.success) {
+        //                    Utils.showToast(`檔案 "${fileName}" ${result.message}`, 'success');
+
+        //                    // 從選擇列表中移除
+        //                    const index = this.selectedFiles.indexOf(fileId);
+        //                    if (index > -1) {
+        //                        this.selectedFiles.splice(index, 1);
+        //                    }
+
+        //                    // 關閉對話框並重新載入
+        //                    this.hideConfirmDialog();
+        //                    await this.loadFiles();
+        //                } else {
+        //                    Utils.showToast(result.message, 'danger');
+        //                }
+        //            } catch (error) {
+        //                console.error('Permanent delete error:', error);
+        //                Utils.showToast('永久刪除時發生錯誤', 'danger');
+        //            } finally {
+        //                this.confirmModal.loading = false;
+        //            }
+        //        },
+
+        //        // 批量還原
+        //        async batchRestore() {
+        //            if (this.selectedFiles.length === 0) {
+        //                Utils.showToast('請先選擇要還原的檔案', 'warning');
+        //                return;
+        //            }
+
+        //            this.showConfirmDialog({
+        //                title: '批量還原',
+        //                message: `確定要還原 ${this.selectedFiles.length} 個檔案嗎？`,
+        //                details: '所有選中的檔案將回到原始位置。',
+        //                icon: 'fas fa-undo text-success',
+        //                buttonClass: 'btn-success',
+        //                buttonIcon: 'fas fa-undo',
+        //                confirmText: '批量還原',
+        //                callback: async () => {
+        //                    await this.performBatchRestore();
+        //                }
+        //            });
+        //        },
+
+        //        // 執行批量還原
+        //        async performBatchRestore() {
+        //            this.confirmModal.loading = true;
+
+        //            try {
+        //                let successCount = 0;
+        //                let failCount = 0;
+
+        //                for (const fileId of [...this.selectedFiles]) {
+        //                    try {
+        //                        const result = await RecycleAPI.restoreFile(fileId);
+        //                        if (result.success) {
+        //                            successCount++;
+        //                        } else {
+        //                            failCount++;
+        //                        }
+        //                    } catch (error) {
+        //                        failCount++;
+        //                    }
+        //                }
+
+        //                // 顯示結果
+        //                if (successCount > 0) {
+        //                    const message = failCount > 0
+        //                        ? `成功還原 ${successCount} 個檔案，${failCount} 個失敗`
+        //                        : `成功還原 ${successCount} 個檔案`;
+        //                    Utils.showToast(message, failCount > 0 ? 'warning' : 'success');
+        //                } else {
+        //                    Utils.showToast('批量還原失敗', 'danger');
+        //                }
+
+        //                // 清除選擇並重新載入
+        //                this.selectedFiles = [];
+        //                this.hideConfirmDialog();
+        //                await this.loadFiles();
+
+        //            } catch (error) {
+        //                console.error('Batch restore error:', error);
+        //                Utils.showToast('批量還原時發生錯誤', 'danger');
+        //            } finally {
+        //                this.confirmModal.loading = false;
+        //            }
+        //        },
+
+        //        // 批量永久刪除
+        //        async batchPermanentDelete() {
+        //            if (this.selectedFiles.length === 0) {
+        //                Utils.showToast('請先選擇要永久刪除的檔案', 'warning');
+        //                return;
+        //            }
+
+        //            this.showConfirmDialog({
+        //                title: '批量永久刪除',
+        //                message: `確定要永久刪除 ${this.selectedFiles.length} 個檔案嗎？`,
+        //                warning: '此操作無法復原，所有選中的檔案將從系統中完全移除！',
+        //                details: '請仔細確認，這個操作無法撤銷。',
+        //                icon: 'fas fa-exclamation-triangle text-danger',
+        //                buttonClass: 'btn-danger',
+        //                buttonIcon: 'fas fa-times',
+        //                confirmText: '永久刪除',
+        //                callback: async () => {
+        //                    await this.performBatchPermanentDelete();
+        //                }
+        //            });
+        //        },
+
+        //        // 執行批量永久刪除
+        //        async performBatchPermanentDelete() {
+        //            this.confirmModal.loading = true;
+
+        //            try {
+        //                let successCount = 0;
+        //                let failCount = 0;
+
+        //                for (const fileId of [...this.selectedFiles]) {
+        //                    try {
+        //                        const result = await RecycleAPI.permanentDelete(fileId);
+        //                        if (result.success) {
+        //                            successCount++;
+        //                        } else {
+        //                            failCount++;
+        //                        }
+        //                    } catch (error) {
+        //                        failCount++;
+        //                    }
+        //                }
+
+        //                // 顯示結果
+        //                if (successCount > 0) {
+        //                    const message = failCount > 0
+        //                        ? `成功永久刪除 ${successCount} 個檔案，${failCount} 個失敗`
+        //                        : `成功永久刪除 ${successCount} 個檔案`;
+        //                    Utils.showToast(message, failCount > 0 ? 'warning' : 'success');
+        //                } else {
+        //                    Utils.showToast('批量永久刪除失敗', 'danger');
+        //                }
+
+        //                // 清除選擇並重新載入
+        //                this.selectedFiles = [];
+        //                this.hideConfirmDialog();
+        //                await this.loadFiles();
+
+        //            } catch (error) {
+        //                console.error('Batch permanent delete error:', error);
+        //                Utils.showToast('批量永久刪除時發生錯誤', 'danger');
+        //            } finally {
+        //                this.confirmModal.loading = false;
+        //            }
+        //        },
+
+        //        // 清空回收筒
+        //        async cleanupRecycleBin() {
+        //            if (this.files.length === 0) {
+        //                Utils.showToast('回收筒已經是空的', 'info');
+        //                return;
+        //            }
+
+        //            this.showConfirmDialog({
+        //                title: '清空回收筒',
+        //                message: `確定要清空整個資源回收筒嗎？`,
+        //                warning: '此操作會永久刪除回收筒中的所有檔案，且無法復原！',
+        //                details: `目前回收筒中有 ${this.files.length} 個檔案，總大小為 ${this.totalSize}。`,
+        //                icon: 'fas fa-trash-alt text-danger',
+        //                buttonClass: 'btn-danger',
+        //                buttonIcon: 'fas fa-trash-alt',
+        //                confirmText: '清空回收筒',
+        //                callback: async () => {
+        //                    await this.performCleanup();
+        //                }
+        //            });
+        //        },
+
+        //        // 執行清空回收筒
+        //        async performCleanup() {
+        //            this.confirmModal.loading = true;
+
+        //            try {
+        //                const result = await RecycleAPI.cleanup();
+        //                if (result.success) {
+        //                    Utils.showToast(result.message, 'success');
+
+        //                    // 清除選擇並重新載入
+        //                    this.selectedFiles = [];
+        //                    this.hideConfirmDialog();
+        //                    await this.loadFiles();
+        //                } else {
+        //                    Utils.showToast(result.message, 'danger');
+        //                }
+        //            } catch (error) {
+        //                console.error('Cleanup error:', error);
+        //                Utils.showToast('清空回收筒時發生錯誤', 'danger');
+        //            } finally {
+        //                this.confirmModal.loading = false;
+        //            }
+        //        },
+
+        //        // 顯示使用說明
+        //        showHelp() {
+        //            const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+        //            modal.show();
+        //        },
+
+        //        // 顯示快捷鍵說明
+        //        showShortcuts() {
+        //            const modal = new bootstrap.Modal(document.getElementById('shortcutsModal'));
+        //            modal.show();
+        //        },
+
+        //        // 顯示確認對話框
+        //        showConfirmDialog(options) {
+        //            this.confirmModal = {
+        //                show: true,
+        //                title: options.title,
+        //                message: options.message,
+        //                warning: options.warning || '',
+        //                details: options.details || '',
+        //                icon: options.icon,
+        //                buttonClass: options.buttonClass,
+        //                buttonIcon: options.buttonIcon,
+        //                confirmText: options.confirmText,
+        //                callback: options.callback,
+        //                loading: false
+        //            };
+
+        //            this.$nextTick(() => {
+        //                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        //                modal.show();
+        //            });
+        //        },
+
+        //        // 隱藏確認對話框
+        //        hideConfirmDialog() {
+        //            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+        //            if (modal) {
+        //                modal.hide();
+        //            }
+        //            this.confirmModal.show = false;
+        //        },
+
+        //        // 工具方法
+        //        formatFileSize: Utils.formatFileSize,
+        //        formatDateTime: Utils.formatDateTime,
+        //        getFileIcon: Utils.getFileIcon,
+
+        //        // 取得檔案圖示樣式類別
+        //        getFileIconClass(extension) {
+        //            const ext = extension.toLowerCase();
+        //            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg'].includes(ext)) {
+        //                return 'file-icon image';
+        //            } else if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'].includes(ext)) {
+        //                return 'file-icon document';
+        //            } else if (['.mp4', '.avi', '.mov', '.wmv'].includes(ext)) {
+        //                return 'file-icon video';
+        //            } else if (['.mp3', '.wav', '.flac', '.aac'].includes(ext)) {
+        //                return 'file-icon audio';
+        //            } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+        //                return 'file-icon archive';
+        //            } else {
+        //                return 'file-icon default';
+        //            }
+        //        },
+
+        //        // 取得檔案類型標籤樣式
+        //        getFileTypeBadgeClass(extension) {
+        //            const ext = extension.toLowerCase();
+        //            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.svg'].includes(ext)) {
+        //                return 'file-type-badge file-type-image';
+        //            } else if (['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt'].includes(ext)) {
+        //                return 'file-type-badge file-type-document';
+        //            } else if (['.mp4', '.avi', '.mov', '.wmv'].includes(ext)) {
+        //                return 'file-type-badge file-type-video';
+        //            } else if (['.mp3', '.wav', '.flac', '.aac'].includes(ext)) {
+        //                return 'file-type-badge file-type-audio';
+        //            } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+        //                return 'file-type-badge file-type-archive';
+        //            } else {
+        //                return 'file-type-badge file-type-default';
+        //            }
+        //        },
+
+        //        // 取得刪除時間描述
+        //        getDeletedTimeAgo(dateString) {
+        //            return Utils.getTimeAgo(dateString);
+        //        },
+
+        //        // 計算剩餘天數
+        //        getRemainingDays(dateString) {
+        //            const deletedDate = new Date(dateString);
+        //            const expiryDate = new Date(deletedDate);
+        //            expiryDate.setDate(expiryDate.getDate() + 30); // 30天後到期
+
+        //            const now = new Date();
+        //            const diffTime = expiryDate - now;
+        //            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        //            return Math.max(0, diffDays);
+        //        },
+
+        //        // 取得剩餘天數樣式
+        //        getRemainingDaysClass(dateString) {
+        //            const remainingDays = this.getRemainingDays(dateString);
+        //            if (remainingDays <= 3) {
+        //                return 'badge bg-danger fw-bold';
+        //            } else if (remainingDays <= 7) {
+        //                return 'badge bg-warning text-dark fw-bold';
+        //            } else {
+        //                return 'badge bg-success';
+        //            }
+        //        },
+
+        //        // 設定鍵盤快捷鍵
+        //        setupKeyboardShortcuts() {
+        //            document.addEventListener('keydown', (e) => {
+        //                // 如果在輸入框中，忽略快捷鍵
+        //                if (e.target.matches('input, textarea, select')) return;
+
+        //                switch (true) {
+        //                    case e.ctrlKey && e.key === 'a':
+        //                        e.preventDefault();
+        //                        this.toggleSelectAll();
+        //                        break;
+        //                    case e.ctrlKey && e.key === 'r':
+        //                        e.preventDefault();
+        //                        if (this.selectedFiles.length > 0) {
+        //                            this.batchRestore();
+        //                        }
+        //                        break;
+        //                    case e.key === 'Delete':
+        //                        e.preventDefault();
+        //                        if (this.selectedFiles.length > 0) {
+        //                            this.batchPermanentDelete();
+        //                        }
+        //                        break;
+        //                    case e.key === 'Escape':
+        //                        this.clearSelection();
+        //                        break;
+        //                    case e.key === 'F5':
+        //                        e.preventDefault();
+        //                        this.loadFiles();
+        //                        break;
+        //                }
+        //            });
+        //        }
+        //    },
+
+        //    // 組件銷毀前清理
+        //    beforeDestroy() {
+        //        if (this.searchTimeout) {
+        //            clearTimeout(this.searchTimeout);
+        //        }
+        //    }
+        //});
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1135 @@
+﻿<!-- files.html -->
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檔案管理 - 檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!--<link rel="stylesheet" href="assets/css/style.css">-->
+    <!--<link rel="stylesheet" href="assets/css/files.css">-->
+</head>
+<body>
+    <div id="app">
+        <!-- 導航列 -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                    檔案管理系統
+                </a>
+
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user me-1"></i>
+                        使用者
+                    </span>
+                    <button class="btn btn-outline-light btn-sm me-2" @click="goToRecycleBin">
+                        <i class="fas fa-trash me-1"></i>
+                        資源回收筒
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 工具列 -->
+        <div class="toolbar bg-light border-bottom p-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <!-- 左側控制項 -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- 檢視模式切換 -->
+                            <div class="btn-group" role="group">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        :class="{ active: viewMode === 'grid' }"
+                                        @click="setViewMode('grid')"
+                                        title="網格檢視">
+                                    <i class="fas fa-th"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        :class="{ active: viewMode === 'list' }"
+                                        @click="setViewMode('list')"
+                                        title="列表檢視">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+
+                            <!-- 上傳按鈕 -->
+                            <button class="btn btn-primary" @click="showUploadModal">
+                                <i class="fas fa-upload me-2"></i>
+                                上傳檔案
+                            </button>
+
+                            <!-- 批量操作按鈕 -->
+                            <div v-if="selectedFiles.length > 0" class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary">已選擇 {{ selectedFiles.length }} 個檔案</span>
+                                <button class="btn btn-sm btn-danger" @click="batchDelete">
+                                    <i class="fas fa-trash me-1"></i>
+                                    批量刪除
+                                </button>
+                                <button class="btn btn-sm btn-secondary" @click="clearSelection">
+                                    <i class="fas fa-times me-1"></i>
+                                    取消選擇
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側搜尋和篩選 -->
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- 搜尋框 -->
+                            <div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="搜尋檔案名稱..."
+                                       v-model="searchQuery"
+                                       @input="onSearchInput">
+                                <button class="btn btn-outline-secondary" @click="loadFiles">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+
+                            <!-- 排序選擇 -->
+                            <select class="form-select" style="width: auto;" v-model="sortOption" @change="onSortChange">
+                                <option value="UploadedAt-desc">最新上傳</option>
+                                <option value="UploadedAt-asc">最舊上傳</option>
+                                <option value="FileName-asc">檔名 A-Z</option>
+                                <option value="FileName-desc">檔名 Z-A</option>
+                                <option value="FileSize-desc">大小（大到小）</option>
+                                <option value="FileSize-asc">大小（小到大）</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主內容區 -->
+        <div class="container-fluid py-4">
+            <!-- 載入中 -->
+            <div v-if="loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                </div>
+                <p class="mt-2">載入檔案中...</p>
+            </div>
+
+            <!-- 檔案列表 -->
+            <div v-else-if="files.length > 0">
+                <!-- 網格檢視 -->
+                <div v-if="viewMode === 'grid'" class="row g-3">
+                    <div v-for="file in files"
+                         :key="file.Id"
+                         class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                        <div class="card file-card h-100"
+                             :class="{ 'selected': selectedFiles.includes(file.Id) }"
+                             @click="toggleFileSelection(file.Id)">
+                            <div class="card-body text-center">
+                                <div class="file-icon mb-3">
+                                    <i :class="getFileIcon(file.FileName)" class="fa-3x text-primary"></i>
+                                </div>
+                                <h6 class="card-title text-truncate" :title="file.FileName">
+                                    {{ file.FileName }}
+                                </h6>
+                                <p class="card-text small text-muted">
+                                    {{ formatFileSize(file.FileSize) }}<br>
+                                    {{ formatDate(file.UploadedAt) }}
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group btn-group-sm w-100">
+                                    <button class="btn btn-outline-primary" @click.stop="showFilePreview(file)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success" @click.stop="downloadFile(file)">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-outline-info" @click.stop="showRenameModal(file)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" @click.stop="deleteFile(file)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 列表檢視 -->
+                <div v-else class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox"
+                                           :checked="isAllSelected"
+                                           @change="toggleSelectAll">
+                                </th>
+                                <th>檔案名稱</th>
+                                <th>大小</th>
+                                <th>上傳時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="file in files" :key="file.Id"
+                                :class="{ 'table-active': selectedFiles.includes(file.Id) }">
+                                <td>
+                                    <input type="checkbox"
+                                           :checked="selectedFiles.includes(file.Id)"
+                                           @change="toggleFileSelection(file.Id)">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i :class="getFileIcon(file.FileName)" class="me-2"></i>
+                                        {{ file.FileName }}
+                                    </div>
+                                </td>
+                                <td>{{ formatFileSize(file.FileSize) }}</td>
+                                <td>{{ formatDate(file.UploadedAt) }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary" @click="showFilePreview(file)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-outline-success" @click="downloadFile(file)">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="btn btn-outline-info" @click="showRenameModal(file)">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" @click="deleteFile(file)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分頁 -->
+                <nav class="mt-4" v-if="totalPages > 1">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                            <button class="page-link" @click="changePage(currentPage - 1)">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+
+                        <li v-for="page in visiblePages"
+                            :key="page"
+                            class="page-item"
+                            :class="{ active: page === currentPage }">
+                            <button class="page-link" @click="changePage(page)">
+                                {{ page }}
+                            </button>
+                        </li>
+
+                        <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                            <button class="page-link" @click="changePage(currentPage + 1)">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <!-- 空狀態 -->
+            <div v-else class="text-center py-5">
+                <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">沒有找到檔案</h4>
+                <p class="text-muted">
+                    {{ searchQuery ? '請試著使用不同的搜尋關鍵字' : '開始上傳您的第一個檔案吧！' }}
+                </p>
+                <button v-if="!searchQuery" class="btn btn-primary" @click="showUploadModal">
+                    <i class="fas fa-upload me-2"></i>
+                    上傳檔案
+                </button>
+            </div>
+        </div>
+
+        <!-- 上傳 Modal -->
+        <div v-if="modals.upload" class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-upload me-2"></i>上傳檔案
+                        </h5>
+                        <button type="button" class="btn-close" @click="closeUploadModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="upload-area text-center p-5 border-2 border-dashed rounded">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <h5>拖拽檔案到此處或點擊選擇</h5>
+                            <p class="text-muted">支援多種檔案格式，最大 50MB</p>
+                            <input type="file" class="form-control" multiple @change="handleFileSelect">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="closeUploadModal">
+                            取消
+                        </button>
+                        <button type="button" class="btn btn-primary" @click="uploadSelectedFiles">
+                            <i class="fas fa-upload me-2"></i>上傳
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 預覽 Modal -->
+        <div v-if="modals.preview" class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-eye me-2"></i>檔案預覽
+                        </h5>
+                        <button type="button" class="btn-close" @click="closePreviewModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="previewFile" class="text-center">
+                            <h6>{{ previewFile.FileName }}</h6>
+                            <div v-if="isImageFile(previewFile.FileName)" class="mt-3">
+                                <img :src="getPreviewUrl(previewFile.Id)" class="img-fluid" alt="預覽">
+                            </div>
+                            <div v-else class="mt-3">
+                                <i :class="getFileIcon(previewFile.FileName)" class="fa-5x text-muted"></i>
+                                <p class="mt-3">此檔案類型暫不支援預覽</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 重新命名 Modal -->
+        <div v-if="modals.rename" class="modal fade show" style="display: block;" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-edit me-2"></i>重新命名
+                        </h5>
+                        <button type="button" class="btn-close" @click="closeRenameModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="newFileName">新檔案名稱</label>
+                            <input type="text" class="form-control" id="newFileName" v-model="newFileName">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="closeRenameModal">
+                            取消
+                        </button>
+                        <button type="button" class="btn btn-primary" @click="performRename">
+                            <i class="fas fa-save me-2"></i>儲存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+
+    <!-- CDN Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>
+
+    <!-- 簡化的 JavaScript -->
+    <script>
+        // 簡化的配置
+        const FILE_CONFIG = {
+            MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
+            PAGE_SIZE: 50
+        };
+
+        const API_CONFIG = {
+            FILES_BASE_URL: 'http://localhost:50426',
+            FILES_API: '/api/files'
+        };
+
+        // 工具函數
+        const Utils = {
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            formatDateTime(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-TW', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            },
+
+            getFileExtension(filename) {
+                return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2);
+            },
+
+            getFileIcon(filename) {
+                const ext = this.getFileExtension(filename).toLowerCase();
+                const iconMap = {
+                    'pdf': 'fas fa-file-pdf',
+                    'doc': 'fas fa-file-word', 'docx': 'fas fa-file-word',
+                    'xls': 'fas fa-file-excel', 'xlsx': 'fas fa-file-excel',
+                    'ppt': 'fas fa-file-powerpoint', 'pptx': 'fas fa-file-powerpoint',
+                    'txt': 'fas fa-file-text', 'csv': 'fas fa-file-csv',
+                    'jpg': 'fas fa-file-image', 'jpeg': 'fas fa-file-image',
+                    'png': 'fas fa-file-image', 'gif': 'fas fa-file-image',
+                    'mp4': 'fas fa-file-video', 'avi': 'fas fa-file-video',
+                    'mp3': 'fas fa-file-audio', 'wav': 'fas fa-file-audio',
+                    'zip': 'fas fa-file-archive', 'rar': 'fas fa-file-archive'
+                };
+                return iconMap[ext] || 'fas fa-file';
+            },
+
+            isImageFile(filename) {
+                const ext = this.getFileExtension(filename).toLowerCase();
+                return ['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(ext);
+            },
+
+            showToast(message, type = 'info') {
+                const container = document.querySelector('.toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast align-items-center text-white bg-${type} border-0`;
+                toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    `;
+                container.appendChild(toast);
+
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 3500);
+            },
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        };
+
+        // 簡化的 API
+        const FileAPI = {
+            async getFiles(params = {}) {
+                try {
+                    const queryString = new URLSearchParams(params).toString();
+                    const url = `${API_CONFIG.FILES_BASE_URL}${API_CONFIG.FILES_API}/list${queryString ? '?' + queryString : ''}`;
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.Success) {
+                        return {
+                            success: true,
+                            data: data.Data.Data || [],
+                            totalCount: data.Data.TotalCount || 0,
+                            totalPages: data.Data.TotalPages || 1,
+                            currentPage: data.Data.Page || 1
+                        };
+                    } else {
+                        return { success: false, message: data.Message };
+                    }
+                } catch (error) {
+                    console.error('API Error:', error);
+                    return { success: false, message: '網路錯誤' };
+                }
+            },
+
+            async uploadFile(file) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(`${API_CONFIG.FILES_BASE_URL}${API_CONFIG.FILES_API}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.Success) {
+                        return { success: true, data: data.Data };
+                    } else {
+                        return { success: false, message: data.Message };
+                    }
+                } catch (error) {
+                    return { success: false, message: '上傳失敗' };
+                }
+            },
+
+            async deleteFile(fileId) {
+                try {
+                    const response = await fetch(`${API_CONFIG.FILES_BASE_URL}${API_CONFIG.FILES_API}/${fileId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const data = await response.json();
+                    return { success: data.Success, message: data.Message };
+                } catch (error) {
+                    return { success: false, message: '刪除失敗' };
+                }
+            },
+
+            getDownloadUrl(fileId) {
+                return `${API_CONFIG.FILES_BASE_URL}${API_CONFIG.FILES_API}/download/${fileId}`;
+            },
+
+            getPreviewUrl(fileId) {
+                return `${API_CONFIG.FILES_BASE_URL}/api/filepreview/content/${fileId}`;
+            }
+        };
+
+        // Vue 應用
+        new Vue({
+            el: '#app',
+            data: {
+                files: [],
+                selectedFiles: [],
+                viewMode: 'grid',
+                loading: false,
+                searchQuery: '',
+                sortOption: 'UploadedAt-desc',
+                currentPage: 1,
+                totalPages: 1,
+                totalFiles: 0,
+                pageSize: FILE_CONFIG.PAGE_SIZE,
+                modals: {
+                    upload: false,
+                    preview: false,
+                    rename: false
+                },
+                previewFile: null,
+                renameFile: null,
+                newFileName: '',
+                selectedUploadFiles: []
+            },
+
+            computed: {
+                visiblePages() {
+                    const pages = [];
+                    const maxVisible = 5;
+                    let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+                    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+                    if (end - start + 1 < maxVisible) {
+                        start = Math.max(1, end - maxVisible + 1);
+                    }
+
+                    for (let i = start; i <= end; i++) {
+                        pages.push(i);
+                    }
+
+                    return pages;
+                },
+
+                hasSelection() {
+                    return this.selectedFiles.length > 0;
+                },
+
+                isAllSelected() {
+                    return this.files.length > 0 && this.selectedFiles.length === this.files.length;
+                }
+            },
+
+            async mounted() {
+                await this.loadFiles();
+            },
+
+            methods: {
+                // 載入檔案
+                async loadFiles() {
+                    this.loading = true;
+                    try {
+                        const params = {
+                            Page: this.currentPage,
+                            PageSize: this.pageSize,
+                            FileName: this.searchQuery,
+                            SortBy: this.sortOption.split('-')[0],
+                            SortOrder: this.sortOption.split('-')[1]
+                        };
+
+                        const result = await FileAPI.getFiles(params);
+
+                        if (result.success) {
+                            this.files = result.data;
+                            this.totalFiles = result.totalCount;
+                            this.totalPages = result.totalPages;
+                            this.currentPage = result.currentPage;
+                        } else {
+                            Utils.showToast(result.message || '載入失敗', 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Load files error:', error);
+                        Utils.showToast('載入檔案時發生錯誤', 'danger');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // 設定檢視模式
+                setViewMode(mode) {
+                    this.viewMode = mode;
+                    localStorage.setItem('fileView', mode);
+                },
+
+                // 搜尋
+                onSearchInput: Utils.debounce(function () {
+                    this.currentPage = 1;
+                    this.loadFiles();
+                }, 500),
+
+                // 排序變更
+                onSortChange() {
+                    this.currentPage = 1;
+                    this.loadFiles();
+                },
+
+                // 分頁
+                async changePage(page) {
+                    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
+                        this.currentPage = page;
+                        await this.loadFiles();
+                    }
+                },
+
+                // 檔案選擇
+                toggleFileSelection(fileId) {
+                    const index = this.selectedFiles.indexOf(fileId);
+                    if (index > -1) {
+                        this.selectedFiles.splice(index, 1);
+                    } else {
+                        this.selectedFiles.push(fileId);
+                    }
+                },
+
+                // 全選
+                toggleSelectAll() {
+                    if (this.isAllSelected) {
+                        this.selectedFiles = [];
+                    } else {
+                        this.selectedFiles = this.files.map(file => file.Id);
+                    }
+                },
+
+                // 清除選擇
+                clearSelection() {
+                    this.selectedFiles = [];
+                },
+
+                // 上傳相關
+                showUploadModal() {
+                    this.modals.upload = true;
+                },
+
+                closeUploadModal() {
+                    this.modals.upload = false;
+                    this.selectedUploadFiles = [];
+                },
+
+                handleFileSelect(event) {
+                    this.selectedUploadFiles = Array.from(event.target.files);
+                },
+
+                async uploadSelectedFiles() {
+                    if (this.selectedUploadFiles.length === 0) {
+                        Utils.showToast('請選擇檔案', 'warning');
+                        return;
+                    }
+
+                    for (const file of this.selectedUploadFiles) {
+                        try {
+                            const result = await FileAPI.uploadFile(file);
+                            if (result.success) {
+                                Utils.showToast(`${file.name} 上傳成功`, 'success');
+                            } else {
+                                Utils.showToast(`${file.name} 上傳失敗: ${result.message}`, 'danger');
+                            }
+                        } catch (error) {
+                            Utils.showToast(`${file.name} 上傳失敗`, 'danger');
+                        }
+                    }
+
+                    this.closeUploadModal();
+                    await this.loadFiles();
+                },
+
+                // 預覽
+                showFilePreview(file) {
+                    this.previewFile = file;
+                    this.modals.preview = true;
+                },
+
+                closePreviewModal() {
+                    this.modals.preview = false;
+                    this.previewFile = null;
+                },
+
+                // 下載
+                downloadFile(file) {
+                    const url = FileAPI.getDownloadUrl(file.Id);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = file.FileName;
+                    link.click();
+                    Utils.showToast(`正在下載 ${file.FileName}`, 'info');
+                },
+
+                // 重新命名
+                showRenameModal(file) {
+                    this.renameFile = file;
+                    this.newFileName = file.FileName;
+                    this.modals.rename = true;
+                },
+
+                closeRenameModal() {
+                    this.modals.rename = false;
+                    this.renameFile = null;
+                    this.newFileName = '';
+                },
+
+                async performRename() {
+                    if (!this.newFileName.trim()) {
+                        Utils.showToast('請輸入檔案名稱', 'warning');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${API_CONFIG.FILES_BASE_URL}${API_CONFIG.FILES_API}/rename/${this.renameFile.Id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                FileId: this.renameFile.Id,
+                                NewFileName: this.newFileName
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.Success) {
+                            Utils.showToast('重新命名成功', 'success');
+                            this.closeRenameModal();
+                            await this.loadFiles();
+                        } else {
+                            Utils.showToast(data.Message || '重新命名失敗', 'danger');
+                        }
+                    } catch (error) {
+                        Utils.showToast('重新命名失敗', 'danger');
+                    }
+                },
+
+                // 刪除
+                async deleteFile(file) {
+                    if (!confirm(`確定要刪除檔案 "${file.FileName}" 嗎？`)) {
+                        return;
+                    }
+
+                    try {
+                        const result = await FileAPI.deleteFile(file.Id);
+                        if (result.success) {
+                            Utils.showToast(`檔案 "${file.FileName}" 已刪除`, 'success');
+
+                            // 從選擇中移除
+                            const index = this.selectedFiles.indexOf(file.Id);
+                            if (index > -1) {
+                                this.selectedFiles.splice(index, 1);
+                            }
+
+                            await this.loadFiles();
+                        } else {
+                            Utils.showToast(result.message || '刪除失敗', 'danger');
+                        }
+                    } catch (error) {
+                        Utils.showToast('刪除檔案時發生錯誤', 'danger');
+                    }
+                },
+
+                // 批量刪除
+                async batchDelete() {
+                    if (this.selectedFiles.length === 0) {
+                        Utils.showToast('請先選擇要刪除的檔案', 'warning');
+                        return;
+                    }
+
+                    if (!confirm(`確定要刪除 ${this.selectedFiles.length} 個檔案嗎？`)) {
+                        return;
+                    }
+
+                    try {
+                        let successCount = 0;
+                        let failCount = 0;
+
+                        for (const fileId of this.selectedFiles) {
+                            try {
+                                const result = await FileAPI.deleteFile(fileId);
+                                if (result.success) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                }
+                            } catch (error) {
+                                failCount++;
+                            }
+                        }
+
+                        if (successCount > 0) {
+                            Utils.showToast(`成功刪除 ${successCount} 個檔案${failCount > 0 ? `，${failCount} 個失敗` : ''}`,
+                                failCount > 0 ? 'warning' : 'success');
+                        } else {
+                            Utils.showToast('批量刪除失敗', 'danger');
+                        }
+
+                        this.selectedFiles = [];
+                        await this.loadFiles();
+                    } catch (error) {
+                        Utils.showToast('批量刪除時發生錯誤', 'danger');
+                    }
+                },
+
+                // 前往回收筒
+                goToRecycleBin() {
+                    window.location.href = 'recycle.html';
+                },
+
+                // 工具方法
+                formatFileSize(bytes) {
+                    return Utils.formatFileSize(bytes);
+                },
+
+                formatDate(date) {
+                    return Utils.formatDateTime(date);
+                },
+
+                getFileIcon(filename) {
+                    return Utils.getFileIcon(filename);
+                },
+
+                isImageFile(filename) {
+                    return Utils.isImageFile(filename);
+                },
+
+                getPreviewUrl(fileId) {
+                    return FileAPI.getPreviewUrl(fileId);
+                }
+            }
+        });
+    </script>
+
+    <style>
+        .file-card {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .file-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+            .file-card.selected {
+                border: 2px solid #007bff;
+                background-color: #f8f9fa;
+            }
+
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            transition: all 0.2s;
+        }
+
+            .upload-area:hover {
+                border-color: #007bff;
+                background-color: #f8f9fa;
+            }
+
+        .modal.show {
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .table-responsive {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+</body>
+</html>
+
+
+
+
+
+
+<!--<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檔案管理 - 檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">-->
+    <!--<link rel="stylesheet" href="assets/css/style.css">-->
+    <!--<link rel="stylesheet" href="assets/css/files.css">-->
+<!--</head>
+<body>
+    <div id="app">-->
+        <!-- 導航列 -->
+        <!--<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-cloud-upload-alt me-2"></i>
+                    檔案管理系統
+                </a>
+
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    <span class="navbar-text me-3">
+                        <i class="fas fa-user me-1"></i>
+                        {{ currentUser ? currentUser.FullName || currentUser.Username : '未知使用者' }}
+                    </span>
+                    <button class="btn btn-outline-light btn-sm me-2" @click="goToRecycleBin">
+                        <i class="fas fa-trash me-1"></i>
+                        資源回收筒
+                    </button>-->
+                    <!--<button class="btn btn-outline-light btn-sm" @click="handleLogout">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        登出
+                    </button>-->
+                <!--</div>
+            </div>
+        </nav>-->
+
+        <!-- 工具列 -->
+        <!--<div class="toolbar bg-light border-bottom p-3">
+            <div class="container-fluid">
+                <div class="row align-items-center">-->
+                    <!-- 左側控制項 -->
+                    <!--<div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">-->
+                            <!-- 檢視模式切換 -->
+                            <!--<div class="btn-group" role="group">
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        :class="{ active: viewMode === 'grid' }"
+                                        @click="setViewMode('grid')"
+                                        title="網格檢視">
+                                    <i class="fas fa-th"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-outline-secondary"
+                                        :class="{ active: viewMode === 'list' }"
+                                        @click="setViewMode('list')"
+                                        title="列表檢視">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>-->
+
+                            <!-- 上傳按鈕 -->
+                            <!--<button class="btn btn-primary" @click="showUploadModal">
+                                <i class="fas fa-upload me-2"></i>
+                                上傳檔案
+                            </button>-->
+
+                            <!-- 批量操作按鈕 -->
+                            <!--<div v-if="selectedFiles.length > 0" class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary">已選擇 {{ selectedFiles.length }} 個檔案</span>
+                                <button class="btn btn-sm btn-danger" @click="batchDelete">
+                                    <i class="fas fa-trash me-1"></i>
+                                    批量刪除
+                                </button>
+                                <button class="btn btn-sm btn-secondary" @click="clearSelection">
+                                    <i class="fas fa-times me-1"></i>
+                                    取消選擇
+                                </button>
+                            </div>
+                        </div>
+                    </div>-->
+
+                    <!-- 右側搜尋和篩選 -->
+                    <!--<div class="col-md-6">
+                        <div class="d-flex align-items-center gap-2">-->
+                            <!-- 搜尋框 -->
+                            <!--<div class="input-group">
+                                <input type="text"
+                                       class="form-control"
+                                       placeholder="搜尋檔案名稱..."
+                                       v-model="searchQuery"
+                                       @input="onSearchInput">
+                                <button class="btn btn-outline-secondary" @click="loadFiles">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>-->
+
+                            <!-- 排序選擇 -->
+                            <!--<select class="form-select" style="width: auto;" v-model="sortOption" @change="onSortChange">
+                                <option value="UploadedAt-desc">最新上傳</option>
+                                <option value="UploadedAt-asc">最舊上傳</option>
+                                <option value="FileName-asc">檔名 A-Z</option>
+                                <option value="FileName-desc">檔名 Z-A</option>
+                                <option value="FileSize-desc">大小（大到小）</option>
+                                <option value="FileSize-asc">大小（小到大）</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+
+        <!-- 主內容區 -->
+        <!--<div class="container-fluid py-4">-->
+            <!-- 載入中 -->
+            <!--<div v-if="loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">載入中...</span>
+                </div>
+                <p class="mt-2">載入檔案中...</p>
+            </div>-->
+
+            <!-- 檔案列表 -->
+            <!--<div v-else-if="files.length > 0">-->
+                <!-- 網格檢視 -->
+                <!--<div v-if="viewMode === 'grid'" class="row g-3">
+                    <div v-for="file in files"
+                         :key="file.Id"
+                         class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+                        <file-grid-item :file="file"
+                                        :selected="selectedFiles.includes(file.Id)"
+                                        @select="toggleFileSelection"
+                                        @preview="showFilePreview"
+                                        @download="downloadFile"
+                                        @rename="showRenameModal"
+                                        @delete="deleteFile"
+                                        @copy-link="copyFileLink"></file-grid-item>
+                    </div>
+                </div>-->
+
+                <!-- 列表檢視 -->
+                <!--<div v-else>
+                    <file-list-view :files="files"
+                                    :selected-files="selectedFiles"
+                                    @select="toggleFileSelection"
+                                    @select-all="toggleSelectAll"
+                                    @preview="showFilePreview"
+                                    @download="downloadFile"
+                                    @rename="showRenameModal"
+                                    @delete="deleteFile"
+                                    @copy-link="copyFileLink"></file-list-view>
+                </div>-->
+
+                <!-- 分頁 -->
+                <!--<nav class="mt-4" v-if="totalPages > 1">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" :class="{ disabled: currentPage <= 1 }">
+                            <button class="page-link" @click="changePage(currentPage - 1)">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </li>
+
+                        <li v-for="page in visiblePages"
+                            :key="page"
+                            class="page-item"
+                            :class="{ active: page === currentPage }">
+                            <button class="page-link" @click="changePage(page)">
+                                {{ page }}
+                            </button>
+                        </li>
+
+                        <li class="page-item" :class="{ disabled: currentPage >= totalPages }">
+                            <button class="page-link" @click="changePage(currentPage + 1)">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            </div>-->
+
+            <!-- 空狀態 -->
+            <!--<div v-else class="text-center py-5">
+                <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">沒有找到檔案</h4>
+                <p class="text-muted">
+                    {{ searchQuery ? '請試著使用不同的搜尋關鍵字' : '開始上傳您的第一個檔案吧！' }}
+                </p>
+                <button v-if="!searchQuery" class="btn btn-primary" @click="showUploadModal">
+                    <i class="fas fa-upload me-2"></i>
+                    上傳檔案
+                </button>
+            </div>
+        </div>-->
+
+        <!-- 檔案上傳 Modal -->
+        <!--<file-upload-modal v-if="modals.upload"
+                           @close="closeUploadModal"
+                           @uploaded="onFileUploaded"></file-upload-modal>-->
+
+        <!-- 檔案預覽 Modal -->
+        <!--<file-preview-modal v-if="modals.preview"
+                            :file="previewFile"
+                            @close="closePreviewModal"></file-preview-modal>-->
+
+        <!-- 檔案重新命名 Modal -->
+        <!--<file-rename-modal v-if="modals.rename"
+                           :file="renameFile"
+                           @close="closeRenameModal"
+                           @renamed="onFileRenamed"></file-rename-modal>
+    </div>-->
+
+    <!-- CDN Scripts -->
+    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/http-vue-loader@1.4.2/src/httpVueLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.4.0/dist/axios.min.js"></script>-->
+
+    <!-- Utils Scripts -->
+    <!--<script src="assets/js/utils/constants.js"></script>
+    <script src="assets/js/utils/helpers.js"></script>-->
+    <!--<script src="assets/js/utils/auth.js"></script>-->
+    <!--<script src="assets/js/utils/api.js"></script>
+    <script src="assets/js/utils/file-utils.js"></script>
+    <script src="assets/js/app.js"></script>-->
+
+    <!-- Page Script -->
+    <!--<script src="assets/js/pages/files.js"></script>
+</body>
+</html>-->

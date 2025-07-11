@@ -1,0 +1,33 @@
+﻿<!-- index.html -->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檔案管理系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+        <div class="text-center">
+            <h1 class="mb-4">
+                <i class="fas fa-cloud-upload-alt text-primary me-3"></i>
+                檔案管理系統
+            </h1>
+            <p class="lead mb-4">安全、快速的檔案管理解決方案</p>
+            <a href="files.html" class="btn btn-primary btn-lg">
+                <i class="fas fa-folder me-2"></i>進入檔案管理
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 如果已登入，直接跳轉到檔案管理頁面
+        if (sessionStorage.getItem('isLoggedIn')) {
+            window.location.href = 'files.html';
+        }
+    </script>
+</body>
+</html>
