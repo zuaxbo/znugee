@@ -1,0 +1,452 @@
+﻿/* ==========================================
+   全域樣式和重置
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    line-height: 1.5;
+}
+
+#app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==========================================
+   導航欄樣式
+   ========================================== */
+
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    margin: 0 4px;
+    padding: 8px 12px !important;
+}
+
+    .navbar-nav .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .navbar-nav .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.2);
+        font-weight: 600;
+    }
+
+.navbar-text {
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* ==========================================
+   主要內容區域
+   ========================================== */
+
+.main-content {
+    flex: 1;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* ==========================================
+   全域載入指示器
+   ========================================== */
+
+.global-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    min-width: 200px;
+}
+
+    .loading-content .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .loading-content p {
+        margin-top: 1rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+/* ==========================================
+   Toast 通知樣式
+   ========================================== */
+
+.toast-container {
+    z-index: 1060;
+}
+
+.toast {
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.toast-header {
+    border-bottom: none;
+    font-weight: 600;
+}
+
+.toast-body {
+    font-weight: 500;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   按鈕樣式增強
+   ========================================== */
+
+.btn {
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+    }
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #1e7e34, #155724);
+    }
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #bd2130);
+}
+
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #bd2130, #a71e2a);
+    }
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #545b62);
+}
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #545b62, #3d4043);
+    }
+
+/* ==========================================
+   卡片樣式增強
+   ========================================== */
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+    .card:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+/* ==========================================
+   表單控制項樣式增強
+   ========================================== */
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+        transform: translateY(-1px);
+    }
+
+.form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    font-weight: 500;
+}
+
+    .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    }
+
+/* ==========================================
+   模態框樣式增強
+   ========================================== */
+
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0 0 12px 12px;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+/* ==========================================
+   工具提示樣式
+   ========================================== */
+
+.tooltip {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.tooltip-inner {
+    background-color: rgba(0, 0, 0, 0.9);
+    border-radius: 6px;
+    padding: 8px 12px;
+}
+
+/* ==========================================
+   滾動條樣式
+   ========================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+
+/* ==========================================
+   響應式設計
+   ========================================== */
+
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
+    .navbar-text {
+        display: none;
+    }
+
+    .main-content {
+        padding: 0;
+    }
+
+    .btn {
+        font-size: 0.875rem;
+        padding: 6px 12px;
+    }
+
+    .loading-content {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-nav {
+        margin-top: 1rem;
+    }
+
+        .navbar-nav .nav-link {
+            text-align: center;
+            margin: 2px 0;
+        }
+
+    .toast-container {
+        left: 1rem;
+        right: 1rem;
+        top: 1rem !important;
+    }
+}
+
+/* ==========================================
+   動畫效果
+   ========================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 通用動畫類 */
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.slide-up {
+    animation: slideUp 0.4s ease-out;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* ==========================================
+   實用工具類
+   ========================================== */
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.select-none {
+    user-select: none;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+}
+
+.text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shadow-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.shadow-md {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
